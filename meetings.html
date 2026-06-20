@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUMS 会議管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="schedule-body">
+  <div class="container-custom">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <a href="dashboard.html" class="btn btn-sm btn-outline-secondary toolbar-back">←</a>
+        <h4 class="page-title">📅 会議</h4>
+      </div>
+      <button class="add-btn" id="addMeetingBtn">+ 新規会議</button>
+    </div>
+
+    <div class="filter-bar">
+      <select class="form-select form-select-sm" id="filterStatus">
+        <option value="all">すべて</option>
+        <option value="upcoming">予定</option>
+        <option value="ongoing">会議中</option>
+        <option value="completed">完了</option>
+      </select>
+    </div>
+
+    <div id="meetingList">
+      <div class="empty-hint">会議がありません</div>
+    </div>
+  </div>
+
+  <!-- 新建会议弹窗 -->
+  <div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title">新規会議作成</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">会議名</label><input type="text" class="form-control" id="meetingTitle"></div>
+          <div class="row mb-3">
+            <div class="col-6"><label class="form-label">日付</label><input type="date" class="form-control" id="meetingDate"></div>
+            <div class="col-6"><label class="form-label">時間</label><input type="text" class="form-control" id="meetingTime" placeholder="例: 17:00-18:00"></div>
+          </div>
+          <div class="mb-3"><label class="form-label">場所</label><input type="text" class="form-control" id="meetingLocation"></div>
+          <div class="mb-3">
+            <label class="form-label">参加者</label>
+            <div id="attendeesCheckboxList" class="checklist-container"></div>
+          </div>
+          <div id="carryoverPreview" style="display:none;" class="mb-3">
+            <hr>
+            <label class="form-label">📌 前回からの持ち越し事項</label>
+            <div id="carryoverList" class="small text-muted"></div>
+            <small class="text-muted">これらの事項は自動的に今回の議題に追加されます。</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">キャンセル</button>
+          <button type="button" class="btn btn-sm btn-primary" id="saveMeetingBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 会议详情弹窗 -->
+  <div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detailTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>日時：</strong><span id="detailDateTime"></span></p>
+          <p><strong>場所：</strong><span id="detailLocation"></span></p>
+          <p><strong>ステータス：</strong><span id="detailStatus"></span></p>
+          <p><strong>出席者：</strong><span id="detailAttendees"></span></p>
+          <hr>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">📋 議題</h6>
+            <div id="adminAgendaActions" style="display:none;">
+              <button class="btn btn-sm btn-outline-primary" id="addAgendaBtn">+ 議題を追加</button>
+            </div>
+          </div>
+          <ul class="checklist" id="detailAgendas"></ul>
+          <hr>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">🔄 次回への持ち越し事項</h6>
+            <div id="adminCarryoverActions" style="display:none;">
+              <button class="btn btn-sm btn-outline-secondary" id="addCarryoverBtn">+ 追加</button>
+            </div>
+          </div>
+          <div id="carryoverSection">
+            <p class="text-muted small">持ち越し事項はありません</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/meetings.js"></script>
+</body>
+</html>

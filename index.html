@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUMS ログイン | 生徒会運営管理システム</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="login-body">
+
+  <!-- 通常ログイン卡片 -->
+  <div class="login-card" id="loginCard">
+    <div class="brand-section">
+      <div class="brand-logo logo-click-area" id="logoClickArea">
+        <span class="brand-logo-icon"></span> SUMS
+      </div>
+      <p class="brand-subtitle">生徒会運営管理システム</p>
+    </div>
+    <div class="divider"></div>
+    <div class="mb-3">
+      <label class="form-label-custom">ユーザー</label>
+      <div class="custom-select-wrapper">
+        <div class="custom-select-trigger" id="userSelectTrigger">
+          <span class="placeholder selected-text" id="selectedUserText">選択してください</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="custom-options" id="userOptions"></div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">パスワード</label>
+      <div class="password-field">
+        <input type="password" id="passwordInput" class="form-control" placeholder="パスワードを入力" autocomplete="current-password">
+        <button type="button" class="toggle-password" id="togglePwd">👁️</button>
+      </div>
+    </div>
+    <div id="errorMessage" class="error-message"></div>
+    <button type="button" id="loginBtn" class="btn btn-login mt-2">ログイン</button>
+  </div>
+
+  <!-- 初期設定卡片（会长初始化 / 成员首次设定共用） -->
+  <div class="login-card" id="initCard" style="display: none;">
+    <div class="brand-section">
+      <div class="brand-logo logo-click-area">
+        <span class="brand-logo-icon"></span> SUMS
+      </div>
+      <p class="brand-subtitle" id="initCardTitle">初期設定</p>
+    </div>
+    <p class="init-description" id="initCardDesc">メンバーが存在しません。最初の管理者を登録してください。</p>
+    <div class="divider"></div>
+    <div class="mb-3">
+      <label class="form-label-custom">氏名</label>
+      <input type="text" id="initName" class="form-control rounded-3" placeholder="氏名">
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">メールアドレス</label>
+      <input type="email" id="initEmail" class="form-control rounded-3" placeholder="example@school.ed.jp">
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">パスワード</label>
+      <input type="password" id="initPassword" class="form-control rounded-3" placeholder="6文字以上">
+    </div>
+    <div class="mb-3">
+      <label class="form-label-custom">パスワード（確認）</label>
+      <input type="password" id="initPasswordConfirm" class="form-control rounded-3" placeholder="もう一度入力">
+    </div>
+    <div id="initError" class="error-message"></div>
+    <button type="button" id="initBtn" class="btn btn-login mt-2">初期化</button>
+  </div>
+
+  <!-- 开发者弹窗 -->
+  <div class="dev-modal" id="devModal">
+    <div class="dev-modal-content">
+      <div class="dev-modal-header">
+        <h5>🔧 管理者モード</h5>
+        <button type="button" class="dev-modal-close" id="devModalClose">×</button>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Developer メール</label>
+        <input type="email" class="form-control" id="devEmail" placeholder="dev@sums.internal">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">パスワード</label>
+        <input type="password" class="form-control" id="devPassword" placeholder="パスワード">
+      </div>
+      <div id="devError" class="dev-error-message"></div>
+      <button type="button" class="btn-dev-login" id="devLoginBtn">ログイン</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

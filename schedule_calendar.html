@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUMS カレンダー</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="schedule-body">
+  <div class="container-custom">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <a href="schedules.html" class="btn btn-sm btn-outline-secondary toolbar-back">←</a>
+        <h4 class="page-title">📆 カレンダー</h4>
+      </div>
+      <button class="add-btn" id="addEventBtn">+ 予定を追加</button>
+    </div>
+
+    <div class="calendar-card" id="calendarContainer">
+      <!-- 月视图动态渲染 -->
+    </div>
+  </div>
+
+  <!-- 新增预定弹窗 -->
+  <div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title">新規予定追加</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">タイトル</label><input type="text" class="form-control" id="eventTitle"></div>
+          <div class="row mb-3">
+            <div class="col-6"><label class="form-label">日付</label><input type="date" class="form-control" id="eventDate"></div>
+            <div class="col-6"><label class="form-label">時間</label><input type="text" class="form-control" id="eventTime" placeholder="例: 9:00-12:00"></div>
+          </div>
+          <div class="mb-3"><label class="form-label">場所</label><input type="text" class="form-control" id="eventLocation"></div>
+          <div class="mb-3"><label class="form-label">参加者</label><input type="text" class="form-control" id="eventParticipants"></div>
+          <div class="mb-3"><label class="form-label">説明</label><textarea class="form-control" id="eventDesc" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">キャンセル</button>
+          <button type="button" class="btn btn-sm btn-primary" id="saveEventBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 日程详情弹窗 -->
+  <div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title">予定詳細</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="detailViewMode">
+            <p><strong>タイトル：</strong><span id="viewTitle"></span></p>
+            <p><strong>日時：</strong><span id="viewDateTime"></span></p>
+            <p><strong>場所：</strong><span id="viewLocation"></span></p>
+            <p><strong>参加者：</strong><span id="viewParticipants"></span></p>
+            <p><strong>説明：</strong><span id="viewDesc"></span></p>
+          </div>
+          <div id="detailEditMode" style="display:none;">
+            <div class="mb-3"><label class="form-label">タイトル</label><input type="text" class="form-control" id="editTitle"></div>
+            <div class="row mb-3">
+              <div class="col-6"><label class="form-label">日付</label><input type="date" class="form-control" id="editDate"></div>
+              <div class="col-6"><label class="form-label">時間</label><input type="text" class="form-control" id="editTime"></div>
+            </div>
+            <div class="mb-3"><label class="form-label">場所</label><input type="text" class="form-control" id="editLocation"></div>
+            <div class="mb-3"><label class="form-label">参加者</label><input type="text" class="form-control" id="editParticipants"></div>
+            <div class="mb-3"><label class="form-label">説明</label><textarea class="form-control" id="editDesc" rows="2"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div id="adminActions" style="display:none;">
+            <button type="button" class="btn btn-sm btn-outline-danger" id="deleteEventBtn">削除</button>
+            <button type="button" class="btn btn-sm btn-primary" id="editToggleBtn">編集</button>
+            <button type="button" class="btn btn-sm btn-success" id="saveEditBtn" style="display:none;">保存</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 无权限弹窗 -->
+  <div class="modal fade" id="noPermissionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title">権限がありません</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>予定を編集・削除するには最高権限が必要です。</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/schedule_calendar.js"></script>
+</body>
+</html>

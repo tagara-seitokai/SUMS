@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUMS ダッシュボード</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+  <div class="dashboard-container">
+    <!-- 顶部栏 -->
+    <div class="top-bar">
+      <div>
+        <div class="welcome-title" id="welcomeName">ようこそ</div>
+        <div class="welcome-sub" id="welcomeDate"></div>
+      </div>
+      <button class="btn btn-sm btn-outline-danger" id="logoutBtn">ログアウト</button>
+    </div>
+
+    <!-- 快捷入口 -->
+    <div class="section-title">🧩 モジュール</div>
+    <div class="quick-cards">
+      <div class="quick-card" id="cardMembers">
+        <div class="quick-icon">👥</div>
+        <div class="quick-info">
+          <h4>メンバー管理</h4>
+          <p>メンバーの追加・編集・権限設定</p>
+        </div>
+      </div>
+      <div class="quick-card" id="cardSchedules">
+        <div class="quick-icon">📅</div>
+        <div class="quick-info">
+          <h4>スケジュール</h4>
+          <p>今後の予定と出席確認</p>
+        </div>
+      </div>
+      <div class="quick-card" id="cardProjects">
+        <div class="quick-icon">📁</div>
+        <div class="quick-info">
+          <h4>プロジェクト</h4>
+          <p>体育祭・文化祭などの大規模活動</p>
+        </div>
+      </div>
+      <div class="quick-card" id="cardCases">
+        <div class="quick-icon">📋</div>
+        <div class="quick-info">
+          <h4>ケース</h4>
+          <p>学生からの意見・備品破損などの案件</p>
+        </div>
+      </div>
+      <div class="quick-card" id="cardTasks">
+        <div class="quick-icon">✅</div>
+        <div class="quick-info">
+          <h4>タスク</h4>
+          <p>個別の作業と進捗管理</p>
+        </div>
+      </div>
+      <div class="quick-card" id="cardMeetings">
+        <div class="quick-icon">🗣️</div>
+        <div class="quick-info">
+          <h4>会議</h4>
+          <p>定例会・議事録管理</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 会长评论 -->
+    <div class="section-title">💬 会長へコメント</div>
+    <button class="comment-btn" id="commentButton">
+      コメントを入力…（タップでコメント画面へ）
+    </button>
+
+    <!-- 组织概览 -->
+    <div class="section-title mt-4">📊 組織概要</div>
+    <div class="org-overview">
+      <div class="org-stat">👥 メンバー<br><span id="orgMembers">-</span></div>
+      <div class="org-stat">📁 プロジェクト<br><span id="orgProjects">-</span></div>
+      <div class="org-stat">📋 ケース<br><span id="orgCases">-</span></div>
+      <div class="org-stat">✅ タスク<br><span id="orgTasks">-</span></div>
+    </div>
+  </div>
+
+  <!-- 无权限弹窗 -->
+  <div class="modal fade" id="noPermissionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title">権限がありません</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>この機能を利用するには最高権限が必要です。</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 评论弹窗 -->
+  <div class="modal fade" id="commentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title" id="commentModalTitle">会長へコメント</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="commentListView">
+            <div class="comment-list" id="commentList">
+              <div class="text-muted">読み込み中…</div>
+            </div>
+          </div>
+          <div id="commentInputView" style="display:none;">
+            <textarea class="form-control" id="commentText" rows="4" placeholder="会長へのコメントを入力してください…"></textarea>
+            <button class="btn btn-primary btn-sm mt-2" id="submitCommentBtn">送信</button>
+            <div id="commentSuccess" class="text-success small mt-1" style="display:none;">送信しました。</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

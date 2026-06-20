@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUMS ケース管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="schedule-body">
+  <div class="container-custom">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <a href="dashboard.html" class="btn btn-sm btn-outline-secondary toolbar-back">←</a>
+        <h4 class="page-title">📋 ケース</h4>
+      </div>
+      <button class="add-btn" id="addCaseBtn">+ 新規ケース</button>
+    </div>
+
+    <div class="filter-bar">
+      <select class="form-select form-select-sm" id="filterStatus">
+        <option value="all">すべて</option>
+        <option value="open">未着手</option>
+        <option value="in_progress">対応中</option>
+        <option value="resolved">解決済</option>
+        <option value="upgraded">プロジェクト化</option>
+      </select>
+    </div>
+
+    <div id="caseList">
+      <div class="empty-hint">ケースがありません</div>
+    </div>
+  </div>
+
+  <!-- 新建 Case 弹窗 -->
+  <div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title">新規ケース作成</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">件名</label><input type="text" class="form-control" id="caseTitle"></div>
+          <div class="mb-3"><label class="form-label">報告者</label><select class="form-select" id="caseReporter"></select></div>
+          <div class="mb-3"><label class="form-label">緊急度</label><select class="form-select" id="caseUrgency"><option value="normal">通常</option><option value="urgent">緊急</option><option value="low">低</option></select></div>
+          <div class="mb-3"><label class="form-label">内容</label><textarea class="form-control" id="caseDesc" rows="3"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">キャンセル</button>
+          <button type="button" class="btn btn-sm btn-primary" id="saveCaseBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case 详情弹窗 -->
+  <div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detailTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <!-- 查看模式 -->
+          <div id="viewMode">
+            <p><strong>報告者：</strong><span id="viewReporter"></span></p>
+            <p><strong>緊急度：</strong><span id="viewUrgency"></span></p>
+            <p><strong>ステータス：</strong><span id="viewStatus"></span></p>
+            <p><strong>作成日：</strong><span id="viewDate"></span></p>
+            <p><strong>内容：</strong><span id="viewDesc"></span></p>
+          </div>
+          <!-- 编辑模式（仅最高权限可见） -->
+          <div id="editMode" style="display:none;">
+            <div class="mb-3"><label class="form-label">件名</label><input type="text" class="form-control" id="editTitle"></div>
+            <div class="mb-3"><label class="form-label">報告者</label><select class="form-select" id="editReporter"></select></div>
+            <div class="mb-3"><label class="form-label">緊急度</label><select class="form-select" id="editUrgency"><option value="normal">通常</option><option value="urgent">緊急</option><option value="low">低</option></select></div>
+            <div class="mb-3">
+              <label class="form-label">ステータス</label>
+              <select class="form-select" id="editStatus">
+                <option value="open">未着手</option>
+                <option value="in_progress">対応中</option>
+                <option value="resolved">解決済</option>
+              </select>
+            </div>
+            <div class="mb-3"><label class="form-label">内容</label><textarea class="form-control" id="editDesc" rows="3"></textarea></div>
+          </div>
+          <!-- 升级区域（仅最高权限可见） -->
+          <div id="upgradeSection" class="upgrade-section" style="display:none;">
+            <strong>🚀 プロジェクト化</strong>
+            <p class="small text-muted mt-1">このケースをプロジェクトに昇格し、タスクで管理できます。</p>
+            <button class="upgrade-btn" id="upgradeToProjectBtn">プロジェクトに変換する</button>
+            <div id="upgradeResult" class="mt-2 small"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div id="adminActions" style="display:none;">
+            <button class="btn btn-sm btn-primary" id="editToggleBtn">編集</button>
+            <button class="btn btn-sm btn-success" id="saveEditBtn" style="display:none;">保存</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/cases.js"></script>
+</body>
+</html>
