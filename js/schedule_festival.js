@@ -7,10 +7,13 @@ import {
 
 let currentUser = null;
 let currentMember = null;
-let dateRange = [];           // 日期数组
-let allShifts = [];           // 当前所有 shift 文档（{id, memberName, ...dates}）
+let dateRange = [];           // 完整的日期范围（string[]）
+let allShifts = [];           // 当前所有 shift 文档
 let allMembers = [];          // 活跃成员列表
+let currentWeekIndex = 0;     // 当前显示的周索引
+let weekBlocks = [];          // 按周分组的日期块（每个块最多7天）
 
+const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
 const noPermissionModal = new bootstrap.Modal(document.getElementById('noPermissionModal'));
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     await loadCurrentMember();
     await loadMembers();
     await loadDateRange();
+    if (dateRange.length > 0) {
+      buildWeekBlocks();
+    }
     await syncMembersAndRender();
     attachEvents();
   });
@@ -64,6 +70,37 @@ async function saveDateRange(dates) {
   }
 }
 
+// 将完整日期范围切割成周块（每块最多7天）
+function buildWeekBlocks() {
+  weekBlocks = [];
+  let start = 0;
+  while (start < dateRange.length) {
+    const currentDate = new Date(dateRange[start] + 'T00:00:00');
+    const dayOfWeek = currentDate.getDay(); // 0=日, 1=月, ...
+    // 第一块不是周一且不是第一周：实际上我们是从整个范围的开始算，第一块可能不完整
+    // 计算到下一个周日（包括当前）最多取7个
+    let end = start;
+    // 如果当前日期不是周一，则本块延续到周日（最多7天）
+    // 但我们需要在开始处，如果不是周一，则一直取到周日（最多到周日）
+    const daysToSunday = 7 - dayOfWeek; // 到周日还有几天（如果周日当天则为7）
+    // 取从 start 开始的 daysToSunday 天，但不超过 dateRange 长度
+    const blockEnd = Math.min(start + daysToSunday, dateRange.length);
+    const block = dateRange.slice(start, blockEnd);
+    weekBlocks.push(block);
+    start = blockEnd;
+  }
+  // 修正 currentWeekIndex 范围
+  if (currentWeekIndex >= weekBlocks.length) {
+    currentWeekIndex = Math.max(0, weekBlocks.length - 1);
+  }
+}
+
+// 获取当前周的日期数组
+function getCurrentWeekDates() {
+  if (weekBlocks.length === 0) return [];
+  return weekBlocks[currentWeekIndex] || [];
+}
+
 // ========== 加载所有 shift ==========
 async function loadAllShifts() {
   const snap = await getDocs(collection(db, 'festivalShifts'));
@@ -92,7 +129,7 @@ async function syncMembersAndRender() {
       const docRef = await addDoc(collection(db, 'festivalShifts'), newShift);
       shiftMap[member.name] = { id: docRef.id, ...newShift };
     } else {
-      // 如果已有但缺少 memberId，补充
+      // 补充 memberId
       if (!shiftMap[member.name].memberId) {
         shiftMap[member.name].memberId = member.id;
         await updateDoc(doc(db, 'festivalShifts', shiftMap[member.name].id), { memberId: member.id });
@@ -100,15 +137,16 @@ async function syncMembersAndRender() {
     }
   }
 
-  // 重新加载完整列表
   await loadAllShifts();
   renderTable();
+  updateWeekNav();
 }
 
 // ========== 渲染表格 ==========
 function renderTable() {
   const head = document.getElementById('shiftTableHead');
   const body = document.getElementById('shiftTableBody');
+  const currentWeekDates = getCurrentWeekDates();
 
   if (dateRange.length === 0) {
     head.innerHTML = '';
@@ -116,9 +154,21 @@ function renderTable() {
     return;
   }
 
-  // 表头
+  if (currentWeekDates.length === 0) {
+    head.innerHTML = '';
+    body.innerHTML = '<tr><td colspan="1" class="text-center text-muted py-3">表示する週がありません。</td></tr>';
+    return;
+  }
+
+  // 表头：显示日期和星期
   let headHTML = '<tr><th>メンバー</th>';
-  dateRange.forEach(d => headHTML += `<th>${d}</th>`);
+  currentWeekDates.forEach(d => {
+    const dateObj = new Date(d + 'T00:00:00');
+    const month = dateObj.getMonth() + 1;
+    const day = dateObj.getDate();
+    const weekday = dayNames[dateObj.getDay()];
+    headHTML += `<th>${month}/${day} (${weekday})</th>`;
+  });
   headHTML += '</tr>';
   head.innerHTML = headHTML;
 
@@ -131,13 +181,13 @@ function renderTable() {
 
   body.innerHTML = '';
   if (displayShifts.length === 0) {
-    body.innerHTML = '<tr><td colspan="' + (dateRange.length + 1) + '" class="text-center text-muted py-3">メンバーがいません</td></tr>';
+    body.innerHTML = '<tr><td colspan="' + (currentWeekDates.length + 1) + '" class="text-center text-muted py-3">メンバーがいません</td></tr>';
     return;
   }
 
   displayShifts.forEach(shift => {
     const row = document.createElement('tr');
-    row.innerHTML = `<td>${escapeHtml(shift.memberName || '')}</td>` + dateRange.map(d => {
+    row.innerHTML = `<td>${escapeHtml(shift.memberName || '')}</td>` + currentWeekDates.map(d => {
       const val = shift[d] || 'none';
       let slotClass = '';
       let displayText = '';
@@ -164,7 +214,6 @@ function renderTable() {
 
       const currentVal = shiftEntry[date] || 'none';
 
-      // 创建下拉框
       const select = document.createElement('select');
       select.className = 'shift-select';
       select.innerHTML = `
@@ -174,12 +223,10 @@ function renderTable() {
         <option value="none" ${currentVal === 'none' ? 'selected' : ''}>シフトなし</option>
       `;
 
-      // 替换内容为下拉框
       this.innerHTML = '';
       this.appendChild(select);
       select.focus();
 
-      // 选择后更新 Firestore 并刷新
       select.addEventListener('change', async () => {
         const newVal = select.value;
         shiftEntry[date] = newVal;
@@ -187,10 +234,8 @@ function renderTable() {
         renderTable();
       });
 
-      // 失去焦点时恢复显示（如果没有选择）
       select.addEventListener('blur', () => {
         setTimeout(() => {
-          // 如果还没选，恢复原状
           if (shiftEntry[date] === currentVal) {
             renderTable();
           }
@@ -200,9 +245,52 @@ function renderTable() {
   });
 }
 
+// 更新周导航按钮状态和标签
+function updateWeekNav() {
+  const prevBtn = document.getElementById('prevWeekBtn');
+  const nextBtn = document.getElementById('nextWeekBtn');
+  const label = document.getElementById('weekLabel');
+
+  if (weekBlocks.length === 0) {
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    label.textContent = '日程なし';
+    return;
+  }
+
+  const currentBlock = weekBlocks[currentWeekIndex];
+  if (!currentBlock || currentBlock.length === 0) {
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    label.textContent = '日程なし';
+    return;
+  }
+
+  const startDate = currentBlock[0];
+  const endDate = currentBlock[currentBlock.length - 1];
+  const format = (d) => {
+    const [y, m, day] = d.split('-');
+    return `${parseInt(m)}/${parseInt(day)}`;
+  };
+  label.textContent = `${format(startDate)} 〜 ${format(endDate)}`;
+
+  prevBtn.disabled = (currentWeekIndex === 0);
+  nextBtn.disabled = (currentWeekIndex === weekBlocks.length - 1);
+}
+
+function changeWeek(delta) {
+  const newIndex = currentWeekIndex + delta;
+  if (newIndex < 0 || newIndex >= weekBlocks.length) return;
+  currentWeekIndex = newIndex;
+  renderTable();
+  updateWeekNav();
+}
+
 // ========== 事件绑定 ==========
 function attachEvents() {
-  // 期间设定
+  document.getElementById('prevWeekBtn').addEventListener('click', () => changeWeek(-1));
+  document.getElementById('nextWeekBtn').addEventListener('click', () => changeWeek(1));
+
   document.getElementById('setDatesBtn').addEventListener('click', async () => {
     if (!hasAdminPermission()) {
       noPermissionModal.show();
@@ -223,15 +311,23 @@ function attachEvents() {
     await saveDateRange(dateRange);
     // 更新所有 shift 的字段（补充新日期，默认 none）
     for (const shift of allShifts) {
+      let needUpdate = false;
       for (const d of dates) {
-        if (!shift[d]) shift[d] = 'none';
+        if (shift[d] === undefined) {
+          shift[d] = 'none';
+          needUpdate = true;
+        }
       }
-      await updateDoc(doc(db, 'festivalShifts', shift.id), shift);
+      if (needUpdate) {
+        await updateDoc(doc(db, 'festivalShifts', shift.id), shift);
+      }
     }
-    location.reload();
+    // 重新构建周视图并重置当前周
+    currentWeekIndex = 0;
+    buildWeekBlocks();
+    await syncMembersAndRender();
   });
 
-  // 添加临时成员
   document.getElementById('addMemberBtn').addEventListener('click', async () => {
     if (!hasAdminPermission()) {
       noPermissionModal.show();
@@ -246,7 +342,6 @@ function attachEvents() {
     };
     dateRange.forEach(d => newShift[d] = 'none');
     await addDoc(collection(db, 'festivalShifts'), newShift);
-    // 重新加载并渲染
     await loadAllShifts();
     renderTable();
   });
