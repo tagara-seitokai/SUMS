@@ -64,6 +64,17 @@
     .legend-none {
       background: repeating-linear-gradient(-45deg, transparent, transparent 4px, #CBD5E1 4px, #CBD5E1 6px);
     }
+    /* 周导航 */
+    .week-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .week-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body class="schedule-body">
@@ -85,6 +96,13 @@
       <div class="legend-item"><div class="legend-color legend-afternoon"></div> 午後 (12:00-16:00)</div>
       <div class="legend-item"><div class="legend-color legend-allday"></div> 終日 (8:30-16:00)</div>
       <div class="legend-item"><div class="legend-color legend-none"></div> シフトなし</div>
+    </div>
+
+    <!-- 周导航 -->
+    <div class="week-nav" id="weekNav">
+      <button class="btn btn-sm btn-outline-secondary" id="prevWeekBtn" disabled>◀ 前週</button>
+      <span class="week-label" id="weekLabel"></span>
+      <button class="btn btn-sm btn-outline-secondary" id="nextWeekBtn">次週 ▶</button>
     </div>
 
     <div class="shift-table-wrapper">
