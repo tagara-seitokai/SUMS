@@ -1,6 +1,7 @@
 /* ============================================================
-   SUMS 全局样式 - 完整版
-   包含: 登录 / Dashboard / 日程 / Task / Project / Case / Members / 通用组件
+   SUMS 全局样式 - 最终完整版
+   包含: 登录 / Dashboard / 日程 / Task / Project / Case /
+         Members / 会议 / 文化祭 / 通用组件
    ============================================================ */
 
 /* ===== CSS 变量 ===== */
@@ -270,7 +271,65 @@ body {
 .time-slot { background: #EFF6FF; border-radius: 6px; padding: 0.2rem 0.4rem; font-size: 0.72rem; color: var(--sums-blue); cursor: pointer; }
 .time-slot.empty { background: transparent; color: var(--sums-text-muted); border: 1px dashed #CBD5E1; }
 
-/* ===== Task 模块样式 ===== */
+/* 文化祭シフト特殊样式 */
+.shift-slot {
+  border-radius: 6px;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.shift-morning { background: #DBEAFE; color: #1E40AF; }
+.shift-afternoon { background: #FEF3C7; color: #92400E; }
+.shift-allday { background: #D1FAE5; color: #065F46; }
+.shift-none {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    #CBD5E1 4px,
+    #CBD5E1 6px
+  );
+  color: #94A3B8;
+}
+.shift-select {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+  width: 100%;
+}
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--sums-text-muted);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+.legend-morning { background: #DBEAFE; }
+.legend-afternoon { background: #FEF3C7; }
+.legend-allday { background: #D1FAE5; }
+.legend-none {
+  background: repeating-linear-gradient(-45deg, transparent, transparent 4px, #CBD5E1 4px, #CBD5E1 6px);
+}
+
+/* ===== Task 模块 ===== */
 .add-task-btn { background: linear-gradient(135deg, var(--sums-blue), var(--sums-teal)); border: none; border-radius: 12px; padding: 0.5rem 1.2rem; color: white; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; }
 .add-task-btn:hover { opacity: 0.9; transform: translateY(-1px); }
 .filter-bar { display: flex; gap: 0.8rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
@@ -288,7 +347,7 @@ body {
 .task-due.completed { color: #10B981; }
 .confirm-btn { background: var(--sums-blue); color: white; border: none; border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; display: none; }
 
-/* ===== Project 模块样式 ===== */
+/* ===== Project 模块 ===== */
 .project-card {
   background: var(--sums-card-bg); border-radius: var(--sums-radius); padding: 1.2rem;
   margin-bottom: 0.8rem; box-shadow: var(--sums-shadow); cursor: pointer;
@@ -308,7 +367,6 @@ body {
 .progress-bar-wrap { background: #F1F5F9; border-radius: 6px; height: 6px; margin-top: 0.5rem; }
 .progress-bar-fill { background: var(--sums-blue); height: 6px; border-radius: 6px; transition: width 0.3s; }
 
-/* 任务勾选框 */
 .task-list-inline { list-style: none; padding: 0; margin: 0.5rem 0 0 0; }
 .task-item-inline { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.82rem; }
 .task-check { width: 16px; height: 16px; border: 2px solid #CBD5E1; border-radius: 4px; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; position: relative; top: -1px; }
@@ -317,7 +375,7 @@ body {
 .task-text { flex: 1; line-height: 1.3; }
 .task-text.completed { text-decoration: line-through; color: var(--sums-text-muted); }
 
-/* ===== Case 模块样式 ===== */
+/* ===== Case 模块 ===== */
 .case-card { background: var(--sums-card-bg); border-radius: var(--sums-radius); padding: 1rem 1.2rem; margin-bottom: 0.6rem; box-shadow: var(--sums-shadow); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; border-left: 4px solid transparent; }
 .case-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
 .case-card.urgent { border-left-color: #EF4444; }
@@ -348,15 +406,22 @@ body {
 .meeting-badge { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 500; white-space: nowrap; }
 .badge-upcoming { background: #DBEAFE; color: #1E40AF; }
 .badge-ongoing { background: #FEF3C7; color: #92400E; }
+.badge-completed { background: #D1FAE5; color: #065F46; }
+
 .checklist { list-style: none; padding: 0; margin: 0; }
-.checklist-item { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid #F1F5F9; font-size: 0.85rem; cursor: pointer; }
+.checklist-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; border-bottom: 1px solid #F1F5F9; font-size: 0.85rem; }
 .checklist-item:last-child { border-bottom: none; }
-.check-box { width: 18px; height: 18px; border: 2px solid #CBD5E1; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.15s; }
-.check-box.checked { background: var(--sums-teal); border-color: var(--sums-teal); color: white; }
-.check-box.checked::after { content: '✓'; font-size: 0.7rem; font-weight: 700; }
+.check-box { width: 18px; height: 18px; border: 2px solid #CBD5E1; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.check-box.checked { background: var(--sums-teal); border-color: var(--sums-teal); }
+.check-box.checked::after { content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; }
+.checklist-text { flex: 1; }
+.checklist-text.checked { text-decoration: line-through; color: var(--sums-text-muted); }
+
 .carryover-section { background: #FFFBEB; border-radius: 12px; padding: 1rem; margin-top: 1rem; border-left: 4px solid #F59E0B; }
 .carryover-item { display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; font-size: 0.85rem; }
 .carryover-item .remove-carryover { color: #EF4444; cursor: pointer; background: none; border: none; font-size: 0.9rem; }
+
+.checklist-container { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; max-height: 120px; overflow-y: auto; padding: 0.3rem 0; }
 
 /* ===== Members 模块 ===== */
 .members-body { background-color: var(--sums-bg); min-height: 100vh; }
@@ -401,125 +466,4 @@ body {
 }
 @media (max-width: 480px) {
   .quick-cards { grid-template-columns: 1fr; }
-}
-
-/* ===== Case 模块样式 ===== */
-.case-card {
-  background: var(--sums-card-bg);
-  border-radius: var(--sums-radius);
-  padding: 1rem 1.2rem;
-  margin-bottom: 0.6rem;
-  box-shadow: var(--sums-shadow);
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  border-left: 4px solid transparent;
-}
-.case-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
-.case-card.urgent { border-left-color: #EF4444; }
-.case-card.normal { border-left-color: #3B82F6; }
-.case-card.low { border-left-color: #10B981; }
-.case-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-.case-title { font-weight: 600; font-size: 1rem; }
-.case-badge { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 500; white-space: nowrap; }
-.badge-open { background: #DBEAFE; color: #1E40AF; }
-.badge-progress { background: #FEF3C7; color: #92400E; }
-.badge-resolved { background: #D1FAE5; color: #065F46; }
-.badge-upgraded { background: #E0E7FF; color: #3730A3; }
-.case-meta { font-size: 0.78rem; color: var(--sums-text-muted); margin-top: 0.3rem; display: flex; gap: 1rem; flex-wrap: wrap; }
-.case-preview { font-size: 0.82rem; color: var(--sums-text-muted); margin-top: 0.4rem; }
-.upgrade-section { background: #EFF6FF; border-radius: 12px; padding: 1rem; margin-top: 1rem; }
-.upgrade-btn { background: var(--sums-blue); color: white; border: none; border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; }
-.upgrade-btn:hover { background: #2563EB; }
-
-/* ===== 会议模块 ===== */
-.meeting-card {
-  background: var(--sums-card-bg);
-  border-radius: var(--sums-radius);
-  padding: 1rem 1.2rem;
-  margin-bottom: 0.6rem;
-  box-shadow: var(--sums-shadow);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.meeting-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
-.meeting-date-box {
-  background: #F8FAFC;
-  border-radius: 10px;
-  padding: 0.5rem 0.7rem;
-  text-align: center;
-  min-width: 55px;
-}
-.meeting-date-day { font-size: 1.3rem; font-weight: 700; color: var(--sums-blue); }
-.meeting-date-month { font-size: 0.7rem; color: var(--sums-text-muted); }
-.meeting-info { flex: 1; }
-.meeting-title { font-weight: 600; font-size: 1rem; }
-.meeting-meta { font-size: 0.78rem; color: var(--sums-text-muted); margin-top: 0.2rem; }
-.meeting-badge { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 500; white-space: nowrap; }
-.badge-upcoming { background: #DBEAFE; color: #1E40AF; }
-.badge-ongoing { background: #FEF3C7; color: #92400E; }
-.badge-completed { background: #D1FAE5; color: #065F46; }
-
-/* 议题 checklist */
-.checklist { list-style: none; padding: 0; margin: 0; }
-.checklist-item {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid #F1F5F9;
-  font-size: 0.85rem;
-}
-.checklist-item:last-child { border-bottom: none; }
-.check-box {
-  width: 18px; height: 18px;
-  border: 2px solid #CBD5E1;
-  border-radius: 4px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.check-box.checked {
-  background: var(--sums-teal);
-  border-color: var(--sums-teal);
-}
-.check-box.checked::after { content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; }
-.checklist-text { flex: 1; }
-.checklist-text.checked { text-decoration: line-through; color: var(--sums-text-muted); }
-
-/* 持ち越し */
-.carryover-section {
-  background: #FFFBEB;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-top: 1rem;
-  border-left: 4px solid #F59E0B;
-}
-.carryover-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.3rem 0;
-  font-size: 0.85rem;
-}
-.carryover-item .remove-carryover {
-  color: #EF4444;
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-size: 0.9rem;
-}
-
-/* 参会人勾选框容器 */
-.checklist-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  max-height: 120px;
-  overflow-y: auto;
-  padding: 0.3rem 0;
 }
