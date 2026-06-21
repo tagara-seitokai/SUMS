@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>メンバー別ワークロード</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --sums-blue: #3B82F6;
+      --sums-teal: #14B8A6;
+      --sums-bg: #F1F5F9;
+      --sums-card-bg: #FFFFFF;
+      --sums-text: #1E293B;
+      --sums-text-muted: #64748B;
+      --sums-radius: 16px;
+      --sums-shadow: 0 8px 30px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--sums-bg);
+      color: var(--sums-text);
+      margin: 0;
+    }
+    .container-custom { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
+    .page-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .legend-bar {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--sums-text-muted);
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.3rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .legend-busy { background: #EF4444; }
+    .legend-normal { background: #F59E0B; }
+    .legend-free { background: #10B981; }
+
+    .member-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1rem;
+    }
+    .member-card {
+      background: var(--sums-card-bg);
+      border-radius: var(--sums-radius);
+      padding: 1.2rem;
+      box-shadow: var(--sums-shadow);
+      border-left: 4px solid #CBD5E1;
+    }
+    .member-card.busy { border-left-color: #EF4444; }
+    .member-card.normal { border-left-color: #F59E0B; }
+    .member-card.free { border-left-color: #10B981; }
+
+    .member-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+    }
+    .member-name { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .member-position { font-size: 0.75rem; color: var(--sums-text-muted); }
+
+    .busy-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.6rem;
+      border-radius: 10px;
+    }
+    .badge-free { background: #D1FAE5; color: #065F46; }
+    .badge-normal { background: #FEF3C7; color: #92400E; }
+    .badge-busy { background: #FEE2E2; color: #991B1B; }
+
+    .section-block {
+      margin-top: 0.5rem;
+      padding-left: 0.8rem;
+      border-left: 2px solid #F1F5F9;
+    }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--sums-text-muted);
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.2rem 0;
+      font-size: 0.8rem;
+      margin-left: 0.4rem;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-open { background: #3B82F6; }
+    .dot-progress { background: #F59E0B; }
+    .dot-done { background: #10B981; }
+    .dot-urgent { background: #EF4444; }
+    .dot-normal { background: #3B82F6; }
+    .dot-low { background: #10B981; }
+
+    .progress-mini {
+      height: 4px;
+      background: #E2E8F0;
+      border-radius: 2px;
+      margin-top: 2px;
+      flex: 1;
+      min-width: 30px;
+    }
+    .progress-mini-fill {
+      height: 4px;
+      background: var(--sums-blue);
+      border-radius: 2px;
+    }
+    .empty-text {
+      color: var(--sums-text-muted);
+      font-size: 0.75rem;
+      margin-left: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-custom">
+    <h4 class="page-title">📊 メンバー別ワークロード</h4>
+    <div class="legend-bar">
+      <div class="legend-item"><span class="legend-dot legend-busy"></span> 多忙（上位 1/3）</div>
+      <div class="legend-item"><span class="legend-dot legend-normal"></span> 普通（中間 1/3）</div>
+      <div class="legend-item"><span class="legend-dot legend-free"></span> 余裕あり（下位 1/3）</div>
+    </div>
+    <div class="member-grid" id="memberGrid">
+      <div class="text-center text-muted py-4">読み込み中…</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDYC5hp1O3gu7qhTMb9xYmZGkkbKWF3VaQ",
+      authDomain: "sums-ea43a.firebaseapp.com",
+      projectId: "sums-ea43a",
+      storageBucket: "sums-ea43a.firebasestorage.app",
+      messagingSenderId: "827785663623",
+      appId: "1:827785663623:web:c4434644260bcd53cbd422"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadData() {
+      const [membersSnap, tasksSnap, projectsSnap, casesSnap] = await Promise.all([
+        getDocs(query(collection(db, 'members'), where('active', '==', true))),
+        getDocs(collection(db, 'tasks')),
+        getDocs(collection(db, 'projects')),
+        getDocs(collection(db, 'cases'))
+      ]);
+
+      const members = [];
+      membersSnap.forEach(d => members.push({ id: d.id, ...d.data() }));
+      members.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+      const tasks = [];
+      tasksSnap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
+
+      const projects = [];
+      projectsSnap.forEach(d => projects.push({ id: d.id, ...d.data() }));
+
+      const cases = [];
+      casesSnap.forEach(d => cases.push({ id: d.id, ...d.data() }));
+
+      return { members, tasks, projects, cases };
+    }
+
+    function getProgress(p) {
+      // 通过 tasks 集合中关联该项目的任务计算进度
+      return 0; // 简化处理，直接显示项目名
+    }
+
+    function assignBusyLevels(members, tasks, cases) {
+      // 计算每个成员的工作量
+      const workloads = members.map(m => {
+        const incompleteTasks = tasks.filter(t => t.assignee === m.name && t.status !== 'completed').length;
+        const unresolvedCases = cases.filter(c => c.reporter === m.name && c.status !== 'resolved' && c.status !== 'upgraded').length;
+        return { member: m, total: incompleteTasks + unresolvedCases };
+      });
+
+      // 按工作量从大到小排序
+      workloads.sort((a, b) => b.total - a.total);
+
+      // 分配颜色等级
+      const n = workloads.length;
+      if (n === 0) return workloads;
+
+      // 计算各等级的边界
+      const redCount = Math.floor(n / 3);
+      const yellowCount = Math.floor(n / 3);
+      // 剩余的归绿色
+      const greenCount = n - redCount - yellowCount;
+
+      let index = 0;
+      for (let i = 0; i < redCount; i++) {
+        workloads[index].level = 'busy';
+        workloads[index].label = '多忙';
+        workloads[index].badgeClass = 'badge-busy';
+        workloads[index].cardClass = 'busy';
+        index++;
+      }
+      for (let i = 0; i < yellowCount; i++) {
+        workloads[index].level = 'normal';
+        workloads[index].label = '普通';
+        workloads[index].badgeClass = 'badge-normal';
+        workloads[index].cardClass = 'normal';
+        index++;
+      }
+      for (let i = 0; i < greenCount; i++) {
+        workloads[index].level = 'free';
+        workloads[index].label = '余裕あり';
+        workloads[index].badgeClass = 'badge-free';
+        workloads[index].cardClass = 'free';
+        index++;
+      }
+
+      // 如果所有人的 total 都是 0，全部显示绿色
+      if (workloads.every(w => w.total === 0)) {
+        workloads.forEach(w => {
+          w.level = 'free';
+          w.label = '余裕あり';
+          w.badgeClass = 'badge-free';
+          w.cardClass = 'free';
+        });
+      }
+
+      return workloads;
+    }
+
+    function render(workloads, tasks, projects, cases) {
+      const grid = document.getElementById('memberGrid');
+      if (workloads.length === 0) {
+        grid.innerHTML = '<div class="text-center text-muted py-4">メンバーがいません</div>';
+        return;
+      }
+
+      grid.innerHTML = workloads.map(w => {
+        const m = w.member;
+        const myTasks = tasks.filter(t => t.assignee === m.name);
+        const myProjects = projects.filter(p => p.owner === m.name);
+        const myCases = cases.filter(c => c.reporter === m.name);
+
+        const taskHtml = myTasks.length === 0
+          ? '<div class="empty-text">なし</div>'
+          : myTasks.map(t => {
+              const dotClass = t.status === 'open' ? 'dot-open' : t.status === 'in_progress' ? 'dot-progress' : 'dot-done';
+              return `<div class="item-row"><span class="dot ${dotClass}"></span>${escapeHtml(t.title || '無題')}</div>`;
+            }).join('');
+
+        const projectHtml = myProjects.length === 0
+          ? '<div class="empty-text">なし</div>'
+          : myProjects.map(p => `<div class="item-row">📁 ${escapeHtml(p.name || '無題')}</div>`).join('');
+
+        const caseHtml = myCases.length === 0
+          ? '<div class="empty-text">なし</div>'
+          : myCases.map(c => {
+              const dotClass = c.urgency === 'urgent' ? 'dot-urgent' : c.urgency === 'low' ? 'dot-low' : 'dot-normal';
+              const statusText = c.status === 'resolved' ? '（解決済）' : c.status === 'upgraded' ? '（PJ化）' : '';
+              return `<div class="item-row"><span class="dot ${dotClass}"></span>${escapeHtml(c.title || '無題')} ${statusText}</div>`;
+            }).join('');
+
+        return `
+          <div class="member-card ${w.cardClass}">
+            <div class="member-card-header">
+              <span class="member-name">
+                ${escapeHtml(m.name)}
+                <span class="busy-badge ${w.badgeClass}">${w.label} (${w.total}件)</span>
+              </span>
+              <span class="member-position">${escapeHtml(m.position || 'メンバー')}</span>
+            </div>
+            <div class="section-block">
+              <div class="section-label">✅ タスク (${myTasks.length})</div>
+              ${taskHtml}
+            </div>
+            <div class="section-block">
+              <div class="section-label">📁 プロジェクト (${myProjects.length})</div>
+              ${projectHtml}
+            </div>
+            <div class="section-block">
+              <div class="section-label">📋 ケース (${myCases.length})</div>
+              ${caseHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    // 主流程
+    const { members, tasks, projects, cases } = await loadData();
+    const workloads = assignBusyLevels(members, tasks, cases);
+    render(workloads, tasks, projects, cases);
+  </script>
+</body>
+</html>
