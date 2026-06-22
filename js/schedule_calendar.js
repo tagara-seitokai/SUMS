@@ -7,10 +7,11 @@ import {
 
 let currentUser = null;
 let currentMember = null;
-let allEvents = [];
+let allEvents = [];       // 手动添加的追加予定
+let allTasks = [];        // 所有 Task
 let currentEvent = null;
 
-let createModal, detailModal, noPermissionModal;
+let createModal, taskDetailModal, eventDetailModal;
 
 const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
 const todayStr = new Date().toISOString().slice(0, 10);
@@ -19,14 +20,14 @@ let currentMonth = new Date().getMonth() + 1;
 
 document.addEventListener('DOMContentLoaded', () => {
   createModal = new bootstrap.Modal(document.getElementById('createModal'));
-  detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
-  noPermissionModal = new bootstrap.Modal(document.getElementById('noPermissionModal'));
+  taskDetailModal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
+  eventDetailModal = new bootstrap.Modal(document.getElementById('eventDetailModal'));
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
     currentUser = user;
     await loadCurrentMember();
-    await loadEvents();
+    await loadAllData();
     renderCalendar();
     attachEventListeners();
   });
@@ -44,10 +45,16 @@ function hasAdminPermission() {
   return currentMember && (currentMember.role === 'President' || currentMember.role === 'Admin');
 }
 
-async function loadEvents() {
-  const snap = await getDocs(collection(db, 'calendarEvents'));
+async function loadAllData() {
+  const [eventsSnap, tasksSnap] = await Promise.all([
+    getDocs(collection(db, 'calendarEvents')),
+    getDocs(collection(db, 'tasks'))
+  ]);
   allEvents = [];
-  snap.forEach(d => allEvents.push({ id: d.id, ...d.data() }));
+  eventsSnap.forEach(d => allEvents.push({ id: d.id, ...d.data() }));
+
+  allTasks = [];
+  tasksSnap.forEach(d => allTasks.push({ id: d.id, ...d.data() }));
 }
 
 // ========== 月视图渲染 ==========
@@ -63,7 +70,6 @@ function renderCalendar() {
     <strong>${currentYear}年${currentMonth}月</strong>
     <button class="btn btn-sm btn-outline-secondary" id="nextMonthBtn">翌月 ▶</button>
   </div>`;
-
   html += '<div class="calendar-header">';
   dayNames.forEach((d, i) => {
     let cls = i === 0 ? 'sunday' : i === 6 ? 'saturday' : '';
@@ -78,13 +84,51 @@ function renderCalendar() {
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const isToday = dateStr === todayStr;
     html += `<div class="calendar-cell ${isToday ? 'today' : ''}"><div class="day-num">${day}</div>`;
+
+    // Task
+    const dayTasks = allTasks.filter(t => {
+      if (!t.dueDate) return false;
+      let dueStr;
+      if (t.dueDate.toDate) dueStr = t.dueDate.toDate().toISOString().slice(0, 10);
+      else if (typeof t.dueDate === 'string') dueStr = t.dueDate.slice(0, 10);
+      else return false;
+      return dueStr === dateStr;
+    });
+
+    dayTasks.forEach(t => {
+      const isOverdue = t.status !== 'completed' && (() => {
+        let dueStr;
+        if (t.dueDate.toDate) dueStr = t.dueDate.toDate().toISOString().slice(0, 10);
+        else if (typeof t.dueDate === 'string') dueStr = t.dueDate.slice(0, 10);
+        return dueStr < todayStr;
+      })();
+      let taskClass = 'task-open';
+      if (t.status === 'completed') taskClass = 'task-completed';
+      else if (isOverdue) taskClass = 'task-overdue';
+      else if (t.status === 'in_progress') taskClass = 'task-progress';
+
+      const safeData = JSON.stringify({
+        id: t.id, title: t.title || '無題', assignee: t.assignee || '未定',
+        project: t.project || '', dueDate: t.dueDate ? formatDueDate(t.dueDate) : '未設定',
+        status: t.status || 'open', desc: t.desc || ''
+      }).replace(/'/g, "&#39;");
+      html += `<div class="event-chip ${taskClass}" data-task='${safeData}'>📋 ${escapeHtml(t.title || '無題')}</div>`;
+    });
+
+    // 追加予定
     const dayEvents = allEvents.filter(e => e.date === dateStr);
     dayEvents.forEach(ev => {
-      html += `<div class="event-chip event-blue" data-event-id="${ev.id}">${escapeHtml(ev.title)}</div>`;
+      const safeData = JSON.stringify({
+        id: ev.id, title: ev.title || '無題', date: ev.date || '',
+        time: ev.time || '', location: ev.location || '', participants: ev.participants || '',
+        desc: ev.desc || ''
+      }).replace(/'/g, "&#39;");
+      html += `<div class="event-chip event-blue" data-event='${safeData}'>📅 ${escapeHtml(ev.title || '無題')}</div>`;
     });
+
     html += '</div>';
     cellCount++;
   }
@@ -96,17 +140,23 @@ function renderCalendar() {
   html += '</div>';
   container.innerHTML = html;
 
-  // 绑定月份切换
+  // 月份切换
   document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
   document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
 
-  // 绑定事件点击
-  document.querySelectorAll('.event-chip').forEach(chip => {
+  // 绑定点击事件
+  document.querySelectorAll('.event-chip[data-task]').forEach(chip => {
     chip.addEventListener('click', (e) => {
       e.stopPropagation();
-      const id = chip.dataset.eventId;
-      const event = allEvents.find(ev => ev.id === id);
-      if (event) openDetailModal(event);
+      const task = JSON.parse(chip.dataset.task);
+      showTaskDetail(task);
+    });
+  });
+  document.querySelectorAll('.event-chip[data-event]').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ev = JSON.parse(chip.dataset.event);
+      showEventDetail(ev);
     });
   });
 }
@@ -118,7 +168,45 @@ function changeMonth(delta) {
   renderCalendar();
 }
 
-// ========== 新增预定 ==========
+function formatDueDate(dueDate) {
+  if (!dueDate) return '未設定';
+  let date;
+  if (dueDate.toDate) date = dueDate.toDate();
+  else if (typeof dueDate === 'string') date = new Date(dueDate);
+  else return '未設定';
+  return date.toLocaleDateString('ja-JP');
+}
+
+// ========== 弹窗 ==========
+function showTaskDetail(task) {
+  document.getElementById('taskDetailTitle').textContent = '📋 ' + task.title;
+  document.getElementById('taskDetailAssignee').textContent = task.assignee;
+  document.getElementById('taskDetailProject').textContent = task.project || 'なし';
+  document.getElementById('taskDetailDue').textContent = task.dueDate;
+  document.getElementById('taskDetailDesc').textContent = task.desc || '説明なし';
+
+  const isOverdue = task.status !== 'completed' && task.dueDate < todayStr;
+  let statusClass = '';
+  let statusText = '';
+  if (task.status === 'completed') { statusClass = 'status-completed'; statusText = '完了'; }
+  else if (isOverdue) { statusClass = 'status-overdue'; statusText = '期限超過'; }
+  else if (task.status === 'in_progress') { statusClass = 'status-progress'; statusText = '進行中'; }
+  else { statusClass = 'status-open'; statusText = '未着手'; }
+  document.getElementById('taskDetailStatus').innerHTML = `<span class="detail-status ${statusClass}">${statusText}</span>`;
+
+  taskDetailModal.show();
+}
+
+function showEventDetail(ev) {
+  document.getElementById('eventDetailTitle').textContent = '📅 ' + ev.title;
+  document.getElementById('eventDetailDateTime').textContent = (ev.date || '') + ' ' + (ev.time || '');
+  document.getElementById('eventDetailLocation').textContent = ev.location || '未定';
+  document.getElementById('eventDetailParticipants').textContent = ev.participants || '未定';
+  document.getElementById('eventDetailDesc').textContent = ev.desc || '説明なし';
+  eventDetailModal.show();
+}
+
+// ========== 新增追加予定 ==========
 function attachEventListeners() {
   document.getElementById('addEventBtn').addEventListener('click', () => {
     document.getElementById('eventTitle').value = '';
@@ -140,107 +228,12 @@ function attachEventListeners() {
     const desc = document.getElementById('eventDesc').value.trim();
 
     const newEvent = { title, date, time, location, participants, desc, createdAt: serverTimestamp() };
-    try {
-      const docRef = await addDoc(collection(db, 'calendarEvents'), newEvent);
-      newEvent.id = docRef.id;
-      allEvents.push(newEvent);
-      createModal.hide();
-      renderCalendar();
-    } catch (e) {
-      console.error(e);
-      alert('予定の追加に失敗しました。');
-    }
+    const docRef = await addDoc(collection(db, 'calendarEvents'), newEvent);
+    newEvent.id = docRef.id;
+    allEvents.push(newEvent);
+    createModal.hide();
+    renderCalendar();
   });
-
-  // 编辑与删除按钮事件
-  document.getElementById('editToggleBtn').addEventListener('click', () => {
-    if (!hasAdminPermission()) { noPermissionModal.show(); return; }
-    document.getElementById('editTitle').value = currentEvent.title;
-    document.getElementById('editDate').value = currentEvent.date || '';
-    document.getElementById('editTime').value = currentEvent.time || '';
-    document.getElementById('editLocation').value = currentEvent.location || '';
-    document.getElementById('editParticipants').value = currentEvent.participants || '';
-    document.getElementById('editDesc').value = currentEvent.desc || '';
-
-    document.getElementById('detailViewMode').style.display = 'none';
-    document.getElementById('detailEditMode').style.display = 'block';
-    document.getElementById('editToggleBtn').style.display = 'none';
-    document.getElementById('saveEditBtn').style.display = 'inline-block';
-    document.getElementById('deleteEventBtn').style.display = 'none';
-  });
-
-  document.getElementById('saveEditBtn').addEventListener('click', async () => {
-    currentEvent.title = document.getElementById('editTitle').value.trim();
-    currentEvent.date = document.getElementById('editDate').value;
-    currentEvent.time = document.getElementById('editTime').value.trim();
-    currentEvent.location = document.getElementById('editLocation').value.trim();
-    currentEvent.participants = document.getElementById('editParticipants').value.trim();
-    currentEvent.desc = document.getElementById('editDesc').value.trim();
-
-    try {
-      await updateDoc(doc(db, 'calendarEvents', currentEvent.id), {
-        title: currentEvent.title, date: currentEvent.date, time: currentEvent.time,
-        location: currentEvent.location, participants: currentEvent.participants, desc: currentEvent.desc
-      });
-      const idx = allEvents.findIndex(e => e.id === currentEvent.id);
-      if (idx >= 0) allEvents[idx] = { ...currentEvent };
-
-      // 更新查看视图
-      document.getElementById('viewTitle').textContent = currentEvent.title;
-      document.getElementById('viewDateTime').textContent = `${currentEvent.date} ${currentEvent.time}`;
-      document.getElementById('viewLocation').textContent = currentEvent.location || '未定';
-      document.getElementById('viewParticipants').textContent = currentEvent.participants || '未定';
-      document.getElementById('viewDesc').textContent = currentEvent.desc || 'なし';
-
-      document.getElementById('detailViewMode').style.display = 'block';
-      document.getElementById('detailEditMode').style.display = 'none';
-      document.getElementById('editToggleBtn').style.display = 'inline-block';
-      document.getElementById('saveEditBtn').style.display = 'none';
-      document.getElementById('deleteEventBtn').style.display = 'inline-block';
-      renderCalendar();
-    } catch (e) {
-      console.error(e);
-      alert('更新に失敗しました。');
-    }
-  });
-
-  document.getElementById('deleteEventBtn').addEventListener('click', async () => {
-    if (!hasAdminPermission()) { noPermissionModal.show(); return; }
-    if (!confirm('この予定を削除しますか？')) return;
-    try {
-      await deleteDoc(doc(db, 'calendarEvents', currentEvent.id));
-      allEvents = allEvents.filter(e => e.id !== currentEvent.id);
-      detailModal.hide();
-      renderCalendar();
-    } catch (e) {
-      console.error(e);
-      alert('削除に失敗しました。');
-    }
-  });
-}
-
-// ========== 详情弹窗（提升到模块作用域） ==========
-function openDetailModal(event) {
-  currentEvent = event;
-  document.getElementById('viewTitle').textContent = event.title;
-  document.getElementById('viewDateTime').textContent = `${event.date || ''} ${event.time || ''}`;
-  document.getElementById('viewLocation').textContent = event.location || '未定';
-  document.getElementById('viewParticipants').textContent = event.participants || '未定';
-  document.getElementById('viewDesc').textContent = event.desc || 'なし';
-
-  document.getElementById('detailViewMode').style.display = 'block';
-  document.getElementById('detailEditMode').style.display = 'none';
-  document.getElementById('editToggleBtn').style.display = 'inline-block';
-  document.getElementById('saveEditBtn').style.display = 'none';
-  document.getElementById('deleteEventBtn').style.display = 'inline-block';
-
-  if (hasAdminPermission()) {
-    document.getElementById('adminActions').style.display = 'block';
-  } else {
-    document.getElementById('adminActions').style.display = 'none';
-  }
-
-  detailModal.show();
 }
 
 function escapeHtml(text) {
