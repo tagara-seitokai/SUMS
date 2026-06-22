@@ -73,15 +73,16 @@ function populateFilters() {
   assigneeSelect.innerHTML = '<option value="all">担当者：すべて</option>';
   allMembers.forEach(m => assigneeSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`);
 
+  // 新建任务中的担当者下拉
   const taskAssigneeSelect = document.getElementById('taskAssignee');
   taskAssigneeSelect.innerHTML = '';
   allMembers.forEach(m => taskAssigneeSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`);
 
+  // 新建和编辑中的项目下拉
   const taskProjectSelect = document.getElementById('taskProject');
   taskProjectSelect.innerHTML = '<option value="">なし</option>';
   allProjects.forEach(p => taskProjectSelect.innerHTML += `<option value="${p.name}">${p.name}</option>`);
 
-  // 编辑模式中的项目下拉
   const editProjectSelect = document.getElementById('editProject');
   if (editProjectSelect) {
     editProjectSelect.innerHTML = '<option value="">なし</option>';
@@ -162,13 +163,25 @@ function openDetailModal(task) {
 
   // 填充编辑表单
   document.getElementById('editTitle').value = task.title || '';
-  document.getElementById('editAssignee').value = task.assignee || '';
-  document.getElementById('editProject').value = task.project || '';
   document.getElementById('editDesc').value = task.desc || '';
   document.getElementById('editDue').value = dueDate ? dueDate.toISOString().slice(0, 10) : '';
   document.getElementById('editStatus').value = task.status || 'open';
 
-  // 重置视图
+  // 填充项目下拉
+  const editProjectSelect = document.getElementById('editProject');
+  editProjectSelect.innerHTML = '<option value="">なし</option>';
+  allProjects.forEach(p => {
+    editProjectSelect.innerHTML += `<option value="${p.name}" ${task.project === p.name ? 'selected' : ''}>${p.name}</option>`;
+  });
+
+  // 填充负责人下拉（可编辑）
+  const editAssigneeSelect = document.getElementById('editAssignee');
+  editAssigneeSelect.innerHTML = '';
+  allMembers.forEach(m => {
+    editAssigneeSelect.innerHTML += `<option value="${m.name}" ${task.assignee === m.name ? 'selected' : ''}>${m.name}</option>`;
+  });
+
+  // 视图切换
   document.getElementById('viewMode').style.display = 'block';
   document.getElementById('editMode').style.display = 'none';
   document.getElementById('editToggleBtn').style.display = 'inline-block';
@@ -223,6 +236,7 @@ function attachEvents() {
   document.getElementById('saveEditBtn').addEventListener('click', async () => {
     if (!currentTask) return;
     const title = document.getElementById('editTitle').value.trim();
+    const assignee = document.getElementById('editAssignee').value;
     const project = document.getElementById('editProject').value;
     const desc = document.getElementById('editDesc').value.trim();
     const due = document.getElementById('editDue').value;
@@ -230,13 +244,14 @@ function attachEvents() {
 
     // 更新 Firestore
     await updateDoc(doc(db, 'tasks', currentTask.id), {
-      title, project, desc,
+      title, assignee, project, desc,
       dueDate: due || null,
       status
     });
 
-    // 更新本地
+    // 更新本地数据
     currentTask.title = title;
+    currentTask.assignee = assignee;
     currentTask.project = project;
     currentTask.desc = desc;
     currentTask.dueDate = due || null;
