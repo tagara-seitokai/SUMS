@@ -52,17 +52,34 @@
       <div class="modal-content rounded-4">
         <div class="modal-header"><h5 class="modal-title" id="detailTitle"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
-          <p><strong>担当者：</strong><span id="detailOwner"></span></p>
-          <p><strong>ステータス：</strong><span id="detailStatus"></span></p>
-          <div class="progress-bar-wrap mb-3"><div class="progress-bar-fill" id="progressBar"></div></div>
-          <hr>
-          <h6 class="mb-2">📋 タスク一覧</h6>
-          <ul class="task-list-inline" id="taskList"></ul>
+          <!-- 查看模式 -->
+          <div id="viewMode">
+            <p><strong>担当者：</strong><span id="viewOwner"></span></p>
+            <p><strong>ステータス：</strong><span id="viewStatus"></span></p>
+            <div class="progress-bar-wrap mb-3"><div class="progress-bar-fill" id="progressBar"></div></div>
+            <hr>
+            <h6 class="mb-2">📋 タスク一覧</h6>
+            <ul class="task-list-inline" id="taskList"></ul>
+          </div>
+          <!-- 编辑模式（仅最高权限可见） -->
+          <div id="editMode" style="display:none;">
+            <div class="mb-3"><label class="form-label">プロジェクト名</label><input type="text" class="form-control" id="editTitle"></div>
+            <div class="mb-3"><label class="form-label">担当者</label><select class="form-select" id="editOwner"></select></div>
+            <div class="mb-3"><label class="form-label">説明</label><textarea class="form-control" id="editDesc" rows="2"></textarea></div>
+            <div class="mb-3">
+              <label class="form-label">ステータス</label>
+              <select class="form-select" id="editStatus">
+                <option value="active">進行中</option>
+                <option value="paused">一時停止</option>
+                <option value="completed">完了</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
-          <div id="adminProjectActions" style="display:none;">
-            <button class="btn btn-sm btn-outline-warning" id="pauseProjectBtn">一時停止</button>
-            <button class="btn btn-sm btn-outline-success" id="completeProjectBtn">完了にする</button>
+          <div id="adminActions" style="display:none;">
+            <button class="btn btn-sm btn-primary" id="editToggleBtn">編集</button>
+            <button class="btn btn-sm btn-success" id="saveEditBtn" style="display:none;">保存</button>
           </div>
           <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
         </div>
@@ -75,7 +92,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4">
         <div class="modal-header"><h5 class="modal-title">権限がありません</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body"><p>プロジェクトの状態を変更するには最高権限が必要です。</p></div>
+        <div class="modal-body"><p>この操作には最高権限が必要です。</p></div>
         <div class="modal-footer"><button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button></div>
       </div>
     </div>
