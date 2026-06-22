@@ -14,7 +14,16 @@
         <a href="schedules.html" class="btn btn-sm btn-outline-secondary toolbar-back">←</a>
         <h4 class="page-title">📆 カレンダー</h4>
       </div>
-      <button class="add-btn" id="addEventBtn">+ 予定を追加</button>
+      <button class="add-btn" id="addEventBtn">+ 追加予定</button>
+    </div>
+
+    <!-- 图例 -->
+    <div class="legend-bar">
+      <div class="legend-item"><div class="legend-dot legend-task-open"></div> タスク：未着手</div>
+      <div class="legend-item"><div class="legend-dot legend-task-progress"></div> 進行中</div>
+      <div class="legend-item"><div class="legend-dot legend-task-completed"></div> 完了</div>
+      <div class="legend-item"><div class="legend-dot legend-task-overdue"></div> 期限超過</div>
+      <div class="legend-item"><div class="legend-dot legend-event"></div> 追加予定</div>
     </div>
 
     <div class="calendar-card" id="calendarContainer">
@@ -22,14 +31,11 @@
     </div>
   </div>
 
-  <!-- 新增预定弹窗 -->
+  <!-- 新增追加予定弹窗 -->
   <div class="modal fade" id="createModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4">
-        <div class="modal-header">
-          <h5 class="modal-title">新規予定追加</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+        <div class="modal-header"><h5 class="modal-title">追加予定</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
           <div class="mb-3"><label class="form-label">タイトル</label><input type="text" class="form-control" id="eventTitle"></div>
           <div class="row mb-3">
@@ -40,67 +46,42 @@
           <div class="mb-3"><label class="form-label">参加者</label><input type="text" class="form-control" id="eventParticipants"></div>
           <div class="mb-3"><label class="form-label">説明</label><textarea class="form-control" id="eventDesc" rows="2"></textarea></div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">キャンセル</button>
-          <button type="button" class="btn btn-sm btn-primary" id="saveEventBtn">保存</button>
-        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">キャンセル</button><button type="button" class="btn btn-sm btn-primary" id="saveEventBtn">保存</button></div>
       </div>
     </div>
   </div>
 
-  <!-- 日程详情弹窗 -->
-  <div class="modal fade" id="detailModal" tabindex="-1">
+  <!-- 任务详情弹窗 -->
+  <div class="modal fade" id="taskDetailModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4">
-        <div class="modal-header">
-          <h5 class="modal-title">予定詳細</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+        <div class="modal-header"><h5 class="modal-title" id="taskDetailTitle"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
-          <div id="detailViewMode">
-            <p><strong>タイトル：</strong><span id="viewTitle"></span></p>
-            <p><strong>日時：</strong><span id="viewDateTime"></span></p>
-            <p><strong>場所：</strong><span id="viewLocation"></span></p>
-            <p><strong>参加者：</strong><span id="viewParticipants"></span></p>
-            <p><strong>説明：</strong><span id="viewDesc"></span></p>
-          </div>
-          <div id="detailEditMode" style="display:none;">
-            <div class="mb-3"><label class="form-label">タイトル</label><input type="text" class="form-control" id="editTitle"></div>
-            <div class="row mb-3">
-              <div class="col-6"><label class="form-label">日付</label><input type="date" class="form-control" id="editDate"></div>
-              <div class="col-6"><label class="form-label">時間</label><input type="text" class="form-control" id="editTime"></div>
-            </div>
-            <div class="mb-3"><label class="form-label">場所</label><input type="text" class="form-control" id="editLocation"></div>
-            <div class="mb-3"><label class="form-label">参加者</label><input type="text" class="form-control" id="editParticipants"></div>
-            <div class="mb-3"><label class="form-label">説明</label><textarea class="form-control" id="editDesc" rows="2"></textarea></div>
-          </div>
+          <p><strong>種別：</strong>タスク</p>
+          <p><strong>担当者：</strong><span id="taskDetailAssignee"></span></p>
+          <p><strong>プロジェクト：</strong><span id="taskDetailProject"></span></p>
+          <p><strong>締切日：</strong><span id="taskDetailDue"></span></p>
+          <p><strong>ステータス：</strong><span id="taskDetailStatus"></span></p>
+          <p><strong>内容：</strong><span id="taskDetailDesc"></span></p>
         </div>
-        <div class="modal-footer">
-          <div id="adminActions" style="display:none;">
-            <button type="button" class="btn btn-sm btn-outline-danger" id="deleteEventBtn">削除</button>
-            <button type="button" class="btn btn-sm btn-primary" id="editToggleBtn">編集</button>
-            <button type="button" class="btn btn-sm btn-success" id="saveEditBtn" style="display:none;">保存</button>
-          </div>
-          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
-        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button></div>
       </div>
     </div>
   </div>
 
-  <!-- 无权限弹窗 -->
-  <div class="modal fade" id="noPermissionModal" tabindex="-1">
+  <!-- 追加予定详情弹窗 -->
+  <div class="modal fade" id="eventDetailModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4">
-        <div class="modal-header">
-          <h5 class="modal-title">権限がありません</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+        <div class="modal-header"><h5 class="modal-title" id="eventDetailTitle"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
-          <p>予定を編集・削除するには最高権限が必要です。</p>
+          <p><strong>種別：</strong>追加予定</p>
+          <p><strong>日時：</strong><span id="eventDetailDateTime"></span></p>
+          <p><strong>場所：</strong><span id="eventDetailLocation"></span></p>
+          <p><strong>参加者：</strong><span id="eventDetailParticipants"></span></p>
+          <p><strong>説明：</strong><span id="eventDetailDesc"></span></p>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button>
-        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">閉じる</button></div>
       </div>
     </div>
   </div>
