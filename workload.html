@@ -3,145 +3,247 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>メンバー別ワークロード</title>
+  <title>Team Workload | SUMS</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     :root {
-      --sums-blue: #3B82F6;
-      --sums-teal: #14B8A6;
-      --sums-bg: #F1F5F9;
-      --sums-card-bg: #FFFFFF;
-      --sums-text: #1E293B;
-      --sums-text-muted: #64748B;
-      --sums-radius: 16px;
-      --sums-shadow: 0 8px 30px rgba(0,0,0,0.04);
+      --bg: #FAFAFA;
+      --card-bg: #FFFFFF;
+      --text: #18181B;
+      --text-secondary: #71717A;
+      --border: #E4E4E7;
+      --blue: #2563EB;
+      --red: #DC2626;
+      --amber: #D97706;
+      --green: #059669;
+      --radius: 16px;
     }
+    * { box-sizing: border-box; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--sums-bg);
-      color: var(--sums-text);
+      background-color: var(--bg);
+      color: var(--text);
       margin: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    .container-custom { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; }
-    .page-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .container-custom { max-width: 1280px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .page-subtitle {
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      margin-top: 0.2rem;
+    }
+
+    .view-tabs {
+      display: inline-flex;
+      gap: 0;
+      margin-bottom: 2rem;
+      background: #F4F4F5;
+      border-radius: 12px;
+      padding: 4px;
+    }
+    .view-tab {
+      padding: 0.5rem 1.4rem;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      letter-spacing: -0.01em;
+    }
+    .view-tab.active {
+      background: var(--card-bg);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .view-tab:hover:not(.active) { color: var(--text); }
+
     .legend-bar {
       display: flex;
-      gap: 1.5rem;
+      gap: 2rem;
       margin-bottom: 1.5rem;
-      font-size: 0.8rem;
-      color: var(--sums-text-muted);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
     }
-    .legend-item { display: flex; align-items: center; gap: 0.3rem; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .legend-busy { background: #EF4444; }
-    .legend-normal { background: #F59E0B; }
-    .legend-free { background: #10B981; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+    .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .legend-busy { background: var(--red); }
+    .legend-normal { background: var(--amber); }
+    .legend-free { background: var(--green); }
 
     .member-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
       gap: 1rem;
     }
+
     .member-card {
-      background: var(--sums-card-bg);
-      border-radius: var(--sums-radius);
-      padding: 1.2rem;
-      box-shadow: var(--sums-shadow);
-      border-left: 4px solid #CBD5E1;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1.3rem 1.4rem;
+      border: 1px solid var(--border);
+      transition: box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s;
+      position: relative;
+      overflow: hidden;
     }
-    .member-card.busy { border-left-color: #EF4444; }
-    .member-card.normal { border-left-color: #F59E0B; }
-    .member-card.free { border-left-color: #10B981; }
+    .member-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--border);
+      transition: background 0.25s;
+    }
+    .member-card.busy::before { background: var(--red); }
+    .member-card.normal::before { background: var(--amber); }
+    .member-card.free::before { background: var(--green); }
+    .member-card:hover {
+      border-color: #D4D4D8;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+    }
 
     .member-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.8rem;
+      margin-bottom: 1rem;
     }
-    .member-name { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-    .member-position { font-size: 0.75rem; color: var(--sums-text-muted); }
-
-    .busy-badge {
-      font-size: 0.7rem;
+    .member-name {
       font-weight: 600;
-      padding: 0.15rem 0.6rem;
-      border-radius: 10px;
-    }
-    .badge-free { background: #D1FAE5; color: #065F46; }
-    .badge-normal { background: #FEF3C7; color: #92400E; }
-    .badge-busy { background: #FEE2E2; color: #991B1B; }
-
-    .section-block {
-      margin-top: 0.5rem;
-      padding-left: 0.8rem;
-      border-left: 2px solid #F1F5F9;
-    }
-    .section-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--sums-text-muted);
-      margin-bottom: 0.2rem;
+      font-size: 0.95rem;
+      letter-spacing: -0.02em;
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.5rem;
     }
+    .member-role {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      background: #F4F4F5;
+      padding: 0.15rem 0.6rem;
+      border-radius: 6px;
+    }
+
+    .status-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .badge-free { background: #ECFDF5; color: #065F46; }
+    .badge-normal { background: #FFFBEB; color: #92400E; }
+    .badge-busy { background: #FEF2F2; color: #991B1B; }
+
+    .section-block {
+      margin-top: 0.6rem;
+      padding-left: 0.6rem;
+    }
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #A1A1AA;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-label .count {
+      font-weight: 500;
+      color: #D4D4D8;
+      font-size: 0.65rem;
+    }
+
     .item-row {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.2rem 0;
+      gap: 0.5rem;
+      padding: 0.22rem 0;
       font-size: 0.8rem;
-      margin-left: 0.4rem;
+      letter-spacing: -0.01em;
+      color: #3F3F46;
+      transition: color 0.15s;
     }
-    .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .dot-open { background: #3B82F6; }
-    .dot-progress { background: #F59E0B; }
-    .dot-done { background: #10B981; }
-    .dot-urgent { background: #EF4444; }
-    .dot-normal { background: #3B82F6; }
-    .dot-low { background: #10B981; }
+    .item-row:hover { color: var(--text); }
+    .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .dot-open { background: var(--blue); }
+    .dot-progress { background: var(--amber); }
+    .dot-done { background: var(--green); }
+    .dot-urgent { background: var(--red); }
+    .dot-normal { background: var(--blue); }
+    .dot-low { background: var(--green); }
 
-    .progress-mini {
-      height: 4px;
-      background: #E2E8F0;
-      border-radius: 2px;
-      margin-top: 2px;
-      flex: 1;
-      min-width: 30px;
-    }
-    .progress-mini-fill {
-      height: 4px;
-      background: var(--sums-blue);
-      border-radius: 2px;
-    }
     .empty-text {
-      color: var(--sums-text-muted);
-      font-size: 0.75rem;
-      margin-left: 0.4rem;
+      color: #E4E4E7;
+      font-size: 0.73rem;
+      font-style: italic;
+      letter-spacing: -0.01em;
+    }
+
+    @media (max-width: 768px) {
+      .container-custom { padding: 1.5rem 1rem; }
+      .member-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container-custom">
-    <h4 class="page-title">📊 メンバー別ワークロード</h4>
-    <div class="legend-bar">
-      <div class="legend-item"><span class="legend-dot legend-busy"></span> 多忙（上位 1/3）</div>
-      <div class="legend-item"><span class="legend-dot legend-normal"></span> 普通（中間 1/3）</div>
-      <div class="legend-item"><span class="legend-dot legend-free"></span> 余裕あり（下位 1/3）</div>
+    <div class="page-header">
+      <div>
+        <div class="page-title">Team Workload</div>
+        <div class="page-subtitle">Real-time snapshot of current assignments</div>
+      </div>
     </div>
+
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="incomplete">In Progress</button>
+      <button class="view-tab" data-view="completed">Resolved</button>
+      <button class="view-tab" data-view="all">All Activity</button>
+    </div>
+
+    <div class="legend-bar">
+      <div class="legend-item"><span class="legend-dot legend-busy"></span> At Capacity</div>
+      <div class="legend-item"><span class="legend-dot legend-normal"></span> Moderate Load</div>
+      <div class="legend-item"><span class="legend-dot legend-free"></span> Available</div>
+    </div>
+
     <div class="member-grid" id="memberGrid">
-      <div class="text-center text-muted py-4">読み込み中…</div>
+      <div class="text-center text-muted py-4">Loading…</div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDYC5hp1O3gu7qhTMb9xYmZGkkbKWF3VaQ",
@@ -155,6 +257,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    let currentView = 'incomplete';
+    let allMembers = [];
+    let allTasks = [];
+    let allProjects = [];
+    let allCases = [];
+
+    // 加载所有数据
     async function loadData() {
       const [membersSnap, tasksSnap, projectsSnap, casesSnap] = await Promise.all([
         getDocs(query(collection(db, 'members'), where('active', '==', true))),
@@ -163,135 +272,116 @@
         getDocs(collection(db, 'cases'))
       ]);
 
-      const members = [];
-      membersSnap.forEach(d => members.push({ id: d.id, ...d.data() }));
-      members.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      allMembers = [];
+      membersSnap.forEach(d => allMembers.push({ id: d.id, ...d.data() }));
+      allMembers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-      const tasks = [];
-      tasksSnap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
+      allTasks = [];
+      tasksSnap.forEach(d => allTasks.push({ id: d.id, ...d.data() }));
 
-      const projects = [];
-      projectsSnap.forEach(d => projects.push({ id: d.id, ...d.data() }));
+      allProjects = [];
+      projectsSnap.forEach(d => allProjects.push({ id: d.id, ...d.data() }));
 
-      const cases = [];
-      casesSnap.forEach(d => cases.push({ id: d.id, ...d.data() }));
-
-      return { members, tasks, projects, cases };
+      allCases = [];
+      casesSnap.forEach(d => allCases.push({ id: d.id, ...d.data() }));
     }
 
-    function getProgress(p) {
-      // 通过 tasks 集合中关联该项目的任务计算进度
-      return 0; // 简化处理，直接显示项目名
-    }
+    function getBusyLevel(memberName) {
+      const incompleteTasks = allTasks.filter(t => t.assignee === memberName && t.status !== 'completed').length;
+      const unresolvedCases = allCases.filter(c => c.reporter === memberName && c.status !== 'resolved' && c.status !== 'upgraded').length;
+      const total = incompleteTasks + unresolvedCases;
 
-    function assignBusyLevels(members, tasks, cases) {
-      // 计算每个成员的工作量
-      const workloads = members.map(m => {
-        const incompleteTasks = tasks.filter(t => t.assignee === m.name && t.status !== 'completed').length;
-        const unresolvedCases = cases.filter(c => c.reporter === m.name && c.status !== 'resolved' && c.status !== 'upgraded').length;
-        return { member: m, total: incompleteTasks + unresolvedCases };
+      // 收集所有成员的工作量用于排名
+      const allWorkloads = allMembers.map(m => {
+        const incTasks = allTasks.filter(t => t.assignee === m.name && t.status !== 'completed').length;
+        const incCases = allCases.filter(c => c.reporter === m.name && c.status !== 'resolved' && c.status !== 'upgraded').length;
+        return { name: m.name, total: incTasks + incCases };
       });
-
-      // 按工作量从大到小排序
-      workloads.sort((a, b) => b.total - a.total);
-
-      // 分配颜色等级
-      const n = workloads.length;
-      if (n === 0) return workloads;
-
-      // 计算各等级的边界
+      allWorkloads.sort((a, b) => b.total - a.total);
+      const n = allWorkloads.length;
       const redCount = Math.floor(n / 3);
       const yellowCount = Math.floor(n / 3);
-      // 剩余的归绿色
-      const greenCount = n - redCount - yellowCount;
+      const rank = allWorkloads.findIndex(w => w.name === memberName);
 
-      let index = 0;
-      for (let i = 0; i < redCount; i++) {
-        workloads[index].level = 'busy';
-        workloads[index].label = '多忙';
-        workloads[index].badgeClass = 'badge-busy';
-        workloads[index].cardClass = 'busy';
-        index++;
-      }
-      for (let i = 0; i < yellowCount; i++) {
-        workloads[index].level = 'normal';
-        workloads[index].label = '普通';
-        workloads[index].badgeClass = 'badge-normal';
-        workloads[index].cardClass = 'normal';
-        index++;
-      }
-      for (let i = 0; i < greenCount; i++) {
-        workloads[index].level = 'free';
-        workloads[index].label = '余裕あり';
-        workloads[index].badgeClass = 'badge-free';
-        workloads[index].cardClass = 'free';
-        index++;
-      }
-
-      // 如果所有人的 total 都是 0，全部显示绿色
-      if (workloads.every(w => w.total === 0)) {
-        workloads.forEach(w => {
-          w.level = 'free';
-          w.label = '余裕あり';
-          w.badgeClass = 'badge-free';
-          w.cardClass = 'free';
-        });
-      }
-
-      return workloads;
+      if (rank < redCount) return { level: 'busy', label: 'AT CAPACITY', badgeClass: 'badge-busy', cardClass: 'busy' };
+      if (rank < redCount + yellowCount) return { level: 'normal', label: 'MODERATE', badgeClass: 'badge-normal', cardClass: 'normal' };
+      return { level: 'free', label: 'AVAILABLE', badgeClass: 'badge-free', cardClass: 'free' };
     }
 
-    function render(workloads, tasks, projects, cases) {
+    function getRoleLabel(position) {
+      const map = {
+        '会長': 'President',
+        '副会長': 'Vice President',
+        '書記': 'Secretary',
+        '会計': 'Treasurer',
+        '顧問': 'Advisor',
+        'メンバー': 'Member'
+      };
+      return map[position] || position || 'Member';
+    }
+
+    function render() {
       const grid = document.getElementById('memberGrid');
-      if (workloads.length === 0) {
-        grid.innerHTML = '<div class="text-center text-muted py-4">メンバーがいません</div>';
+      if (allMembers.length === 0) {
+        grid.innerHTML = '<div class="text-center text-muted py-4">No members found</div>';
         return;
       }
 
-      grid.innerHTML = workloads.map(w => {
-        const m = w.member;
-        const myTasks = tasks.filter(t => t.assignee === m.name);
-        const myProjects = projects.filter(p => p.owner === m.name);
-        const myCases = cases.filter(c => c.reporter === m.name);
+      grid.innerHTML = allMembers.map(m => {
+        const myTasksAll = allTasks.filter(t => t.assignee === m.name);
+        const myProjectsAll = allProjects.filter(p => p.owner === m.name);
+        const myCasesAll = allCases.filter(c => c.reporter === m.name);
+
+        const filterFn = (item) => {
+          if (currentView === 'all') return true;
+          const isCompleted = item.status === 'completed' || item.status === 'resolved' || item.status === 'upgraded';
+          return currentView === 'completed' ? isCompleted : !isCompleted;
+        };
+
+        const myTasks = myTasksAll.filter(filterFn);
+        const myCases = myCasesAll.filter(filterFn);
+        const myProjects = myProjectsAll;
+
+        const busy = getBusyLevel(m.name);
 
         const taskHtml = myTasks.length === 0
-          ? '<div class="empty-text">なし</div>'
+          ? '<div class="empty-text">No open tasks</div>'
           : myTasks.map(t => {
               const dotClass = t.status === 'open' ? 'dot-open' : t.status === 'in_progress' ? 'dot-progress' : 'dot-done';
-              return `<div class="item-row"><span class="dot ${dotClass}"></span>${escapeHtml(t.title || '無題')}</div>`;
+              return `<div class="item-row"><span class="dot ${dotClass}"></span>${escapeHtml(t.title || 'Untitled')}</div>`;
             }).join('');
 
         const projectHtml = myProjects.length === 0
-          ? '<div class="empty-text">なし</div>'
-          : myProjects.map(p => `<div class="item-row">📁 ${escapeHtml(p.name || '無題')}</div>`).join('');
+          ? '<div class="empty-text">No active projects</div>'
+          : myProjects.map(p => `<div class="item-row">📁 ${escapeHtml(p.name || 'Untitled')}</div>`).join('');
 
         const caseHtml = myCases.length === 0
-          ? '<div class="empty-text">なし</div>'
+          ? '<div class="empty-text">No open cases</div>'
           : myCases.map(c => {
               const dotClass = c.urgency === 'urgent' ? 'dot-urgent' : c.urgency === 'low' ? 'dot-low' : 'dot-normal';
-              const statusText = c.status === 'resolved' ? '（解決済）' : c.status === 'upgraded' ? '（PJ化）' : '';
-              return `<div class="item-row"><span class="dot ${dotClass}"></span>${escapeHtml(c.title || '無題')} ${statusText}</div>`;
+              const statusText = c.status === 'resolved' ? '(Resolved)' : c.status === 'upgraded' ? '(Converted)' : '';
+              return `<div class="item-row"><span class="dot ${dotClass}"></span>${escapeHtml(c.title || 'Untitled')} ${statusText}</div>`;
             }).join('');
 
         return `
-          <div class="member-card ${w.cardClass}">
+          <div class="member-card ${busy.cardClass}">
             <div class="member-card-header">
               <span class="member-name">
                 ${escapeHtml(m.name)}
-                <span class="busy-badge ${w.badgeClass}">${w.label} (${w.total}件)</span>
+                <span class="member-role">${getRoleLabel(m.position)}</span>
               </span>
-              <span class="member-position">${escapeHtml(m.position || 'メンバー')}</span>
+              <span class="status-badge ${busy.badgeClass}">${busy.label}</span>
             </div>
             <div class="section-block">
-              <div class="section-label">✅ タスク (${myTasks.length})</div>
+              <div class="section-label">Tasks <span class="count">${currentView === 'all' ? myTasksAll.length : myTasks.length}</span></div>
               ${taskHtml}
             </div>
             <div class="section-block">
-              <div class="section-label">📁 プロジェクト (${myProjects.length})</div>
+              <div class="section-label">Projects <span class="count">${myProjects.length}</span></div>
               ${projectHtml}
             </div>
             <div class="section-block">
-              <div class="section-label">📋 ケース (${myCases.length})</div>
+              <div class="section-label">Cases <span class="count">${currentView === 'all' ? myCasesAll.length : myCases.length}</span></div>
               ${caseHtml}
             </div>
           </div>
@@ -305,10 +395,19 @@
       return div.innerHTML;
     }
 
-    // 主流程
-    const { members, tasks, projects, cases } = await loadData();
-    const workloads = assignBusyLevels(members, tasks, cases);
-    render(workloads, tasks, projects, cases);
+    // 标签切换事件
+    document.querySelectorAll('.view-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        currentView = this.dataset.view;
+        document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        render();
+      });
+    });
+
+    // 初始化
+    await loadData();
+    render();
   </script>
 </body>
 </html>
