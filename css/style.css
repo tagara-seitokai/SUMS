@@ -467,3 +467,26 @@ body {
 @media (max-width: 480px) {
   .quick-cards { grid-template-columns: 1fr; }
 }
+
+/* 日历图例 */
+.legend-bar { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; font-size: 0.75rem; color: var(--sums-text-muted); }
+.legend-item { display: flex; align-items: center; gap: 0.3rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+.legend-task-open { background: #DBEAFE; }
+.legend-task-progress { background: #FEF3C7; }
+.legend-task-completed { background: #D1FAE5; }
+.legend-task-overdue { background: #FEE2E2; }
+.legend-event { background: #DBEAFE; }
+
+/* Task 状态标签 */
+.task-open { background: #DBEAFE; color: #1E40AF; }
+.task-progress { background: #FEF3C7; color: #92400E; }
+.task-completed { background: #D1FAE5; color: #065F46; }
+.task-overdue { background: #FEE2E2; color: #991B1B; }
+
+/* 详情弹窗状态标签 */
+.detail-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 10px; font-size: 0.8rem; font-weight: 500; }
+.status-open { background: #DBEAFE; color: #1E40AF; }
+.status-progress { background: #FEF3C7; color: #92400E; }
+.status-completed { background: #D1FAE5; color: #065F46; }
+.status-overdue { background: #FEE2E2; color: #991B1B; }
