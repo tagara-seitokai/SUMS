@@ -78,7 +78,7 @@ function getProgress(tasks) {
   return Math.round((done / tasks.length) * 100);
 }
 
-// ========== 渲染列表（含进度条） ==========
+// ========== 渲染列表 ==========
 function renderList() {
   const filter = document.getElementById('filterStatus').value;
   const filtered = filter === 'all' ? allProjects : allProjects.filter(p => p.status === filter);
@@ -111,7 +111,6 @@ function renderList() {
 
   document.querySelectorAll('.project-card').forEach(card => {
     card.addEventListener('click', () => openDetailModal(card.dataset.id));
-    // 异步更新进度条
     const projectId = card.dataset.id;
     const project = allProjects.find(p => p.id === projectId);
     if (project) {
@@ -131,12 +130,10 @@ async function openDetailModal(id) {
 
   currentTasks = await fetchTasksForProject(currentProject.name);
 
+  document.getElementById('viewOwner').textContent = currentProject.owner || '未定';
+  document.getElementById('viewStatus').textContent = currentProject.status === 'active' ? '進行中' : currentProject.status === 'paused' ? '一時停止' : '完了';
   document.getElementById('detailTitle').textContent = currentProject.name || '無題';
-  document.getElementById('detailOwner').textContent = currentProject.owner || '未定';
-  const statusText = currentProject.status === 'active' ? '進行中' : currentProject.status === 'paused' ? '一時停止' : '完了';
-  document.getElementById('detailStatus').textContent = statusText;
 
-  // ★ 进度条 ★
   const progress = getProgress(currentTasks);
   document.getElementById('progressBar').style.width = progress + '%';
 
@@ -170,7 +167,26 @@ async function openDetailModal(id) {
     });
   }
 
-  document.getElementById('adminProjectActions').style.display = hasAdminPermission() ? 'block' : 'none';
+  // 填充编辑表单
+  document.getElementById('editTitle').value = currentProject.name || '';
+  document.getElementById('editDesc').value = currentProject.desc || '';
+  document.getElementById('editStatus').value = currentProject.status || 'active';
+
+  // 动态填充负责人下拉框
+  const editOwnerSelect = document.getElementById('editOwner');
+  editOwnerSelect.innerHTML = allMembers.map(m =>
+    `<option value="${m.name}" ${m.name === currentProject.owner ? 'selected' : ''}>${m.name}</option>`
+  ).join('');
+
+  // 视图切换
+  document.getElementById('viewMode').style.display = 'block';
+  document.getElementById('editMode').style.display = 'none';
+  document.getElementById('editToggleBtn').style.display = 'inline-block';
+  document.getElementById('saveEditBtn').style.display = 'none';
+
+  // 权限控制
+  document.getElementById('adminActions').style.display = hasAdminPermission() ? 'block' : 'none';
+
   detailModal.show();
 }
 
@@ -189,6 +205,7 @@ function attachEvents() {
     if (!name) { alert('プロジェクト名を入力してください。'); return; }
     const owner = document.getElementById('projectOwner').value;
     const desc = document.getElementById('projectDesc').value.trim();
+
     const newProject = { name, owner, desc, status: 'active', createdAt: serverTimestamp() };
     const docRef = await addDoc(collection(db, 'projects'), newProject);
     newProject.id = docRef.id;
@@ -199,25 +216,35 @@ function attachEvents() {
 
   document.getElementById('filterStatus').addEventListener('change', renderList);
 
-  document.getElementById('pauseProjectBtn').addEventListener('click', async () => {
-    if (!hasAdminPermission()) { noPermissionModal.show(); return; }
-    if (!currentProject) return;
-    currentProject.status = 'paused';
-    await updateDoc(doc(db, 'projects', currentProject.id), { status: 'paused' });
-    openDetailModal(currentProject.id);
-    renderList();
+  // 编辑切换
+  document.getElementById('editToggleBtn').addEventListener('click', () => {
+    document.getElementById('viewMode').style.display = 'none';
+    document.getElementById('editMode').style.display = 'block';
+    document.getElementById('editToggleBtn').style.display = 'none';
+    document.getElementById('saveEditBtn').style.display = 'inline-block';
   });
 
-  document.getElementById('completeProjectBtn').addEventListener('click', async () => {
-    if (!hasAdminPermission()) { noPermissionModal.show(); return; }
+  // 保存编辑
+  document.getElementById('saveEditBtn').addEventListener('click', async () => {
     if (!currentProject) return;
-    const allDone = currentTasks.length > 0 && currentTasks.every(t => t.status === 'completed');
-    if (!allDone && currentTasks.length > 0) {
-      alert('未完了のタスクが残っています。すべてのタスクを完了してください。');
-      return;
-    }
-    currentProject.status = 'completed';
-    await updateDoc(doc(db, 'projects', currentProject.id), { status: 'completed' });
+    const name = document.getElementById('editTitle').value.trim();
+    const owner = document.getElementById('editOwner').value;
+    const desc = document.getElementById('editDesc').value.trim();
+    const status = document.getElementById('editStatus').value;
+
+    // 更新 Firestore
+    await updateDoc(doc(db, 'projects', currentProject.id), { name, owner, desc, status });
+
+    // 更新本地数据
+    currentProject.name = name;
+    currentProject.owner = owner;
+    currentProject.desc = desc;
+    currentProject.status = status;
+
+    // 如果负责人变了，需要把该项目下的所有 task 的 assignee 也更新为新的负责人（根据需求决定，这里先不做，保持任务负责人独立）
+    // 实际上项目负责人只是一个显示属性，不影响任务负责人。
+
+    // 刷新视图
     openDetailModal(currentProject.id);
     renderList();
   });
