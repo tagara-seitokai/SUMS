@@ -65,7 +65,8 @@ async function loadTasks() {
 // ========== 渲染 ==========
 function renderAll() {
   populateFilters();
-  renderTaskList(allTasks);
+  // 初始显示时直接应用排序
+  applyFilters();
 }
 
 function populateFilters() {
@@ -73,12 +74,10 @@ function populateFilters() {
   assigneeSelect.innerHTML = '<option value="all">担当者：すべて</option>';
   allMembers.forEach(m => assigneeSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`);
 
-  // 新建任务中的担当者下拉
   const taskAssigneeSelect = document.getElementById('taskAssignee');
   taskAssigneeSelect.innerHTML = '';
   allMembers.forEach(m => taskAssigneeSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`);
 
-  // 新建和编辑中的项目下拉
   const taskProjectSelect = document.getElementById('taskProject');
   taskProjectSelect.innerHTML = '<option value="">なし</option>';
   allProjects.forEach(p => taskProjectSelect.innerHTML += `<option value="${p.name}">${p.name}</option>`);
@@ -125,7 +124,24 @@ function renderTaskList(tasks) {
   });
 }
 
-// ========== 过滤 ==========
+// ========== 排序（新增） ==========
+function sortTasks(tasks) {
+  return tasks.sort((a, b) => {
+    // 已完成的任务排到最后
+    if (a.status === 'completed' && b.status !== 'completed') return 1;
+    if (a.status !== 'completed' && b.status === 'completed') return -1;
+
+    // 同为未完成，按截止时间升序，最近的在前面
+    const aDue = a.dueDate ? (a.dueDate.toDate ? a.dueDate.toDate() : new Date(a.dueDate)) : null;
+    const bDue = b.dueDate ? (b.dueDate.toDate ? b.dueDate.toDate() : new Date(b.dueDate)) : null;
+    if (aDue && bDue) return aDue - bDue;
+    if (aDue) return -1;   // a有日期b无，a在前
+    if (bDue) return 1;    // b有日期a无，b在前
+    return 0;
+  });
+}
+
+// ========== 过滤 + 排序 ==========
 function applyFilters() {
   const statusFilter = document.getElementById('filterStatus').value;
   const assigneeFilter = document.getElementById('filterAssignee').value;
@@ -147,6 +163,9 @@ function applyFilters() {
   if (assigneeFilter !== 'all') {
     filtered = filtered.filter(t => t.assignee === assigneeFilter);
   }
+
+  // 应用排序
+  sortTasks(filtered);
   renderTaskList(filtered);
 }
 
@@ -257,7 +276,7 @@ function attachEvents() {
     currentTask.dueDate = due || null;
     currentTask.status = status;
 
-    // 刷新视图
+    // 刷新视图并应用排序
     openDetailModal(currentTask);
     applyFilters();
   });
