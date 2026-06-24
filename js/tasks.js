@@ -65,7 +65,6 @@ async function loadTasks() {
 // ========== 渲染 ==========
 function renderAll() {
   populateFilters();
-  // 初始显示时直接应用排序
   applyFilters();
 }
 
@@ -89,6 +88,7 @@ function populateFilters() {
   }
 }
 
+// 渲染列表（带状态边框和排序）
 function renderTaskList(tasks) {
   const container = document.getElementById('taskList');
   if (tasks.length === 0) {
@@ -96,14 +96,25 @@ function renderTaskList(tasks) {
     return;
   }
   container.innerHTML = tasks.map(t => {
-    const statusClass = `status-${t.status || 'open'}`;
-    const isCompleted = t.status === 'completed';
+    const status = t.status || 'open';
+    const statusClass = `status-${status}`;
+    const isCompleted = status === 'completed';
+
+    // 状态文字
+    let statusLabel = '未着手';
+    let badgeClass = 'badge-open';
+    if (status === 'in_progress') { statusLabel = '進行中'; badgeClass = 'badge-progress'; }
+    else if (status === 'completed') { statusLabel = '完了'; badgeClass = 'badge-completed'; }
+
+    // 截止日期
     const dueDate = t.dueDate ? (t.dueDate.toDate ? t.dueDate.toDate() : new Date(t.dueDate)) : null;
     const dueText = isCompleted ? '完了' : `締切日：${dueDate ? `${dueDate.getMonth()+1}/${dueDate.getDate()}` : '未設定'}`;
-    const dueClass = isCompleted ? 'task-due completed' : (dueDate && dueDate < new Date(todayStr) ? 'task-due overdue' : 'task-due');
+    const isOverdue = !isCompleted && dueDate && dueDate < new Date(todayStr);
+    const dueClass = isCompleted ? 'task-due completed' : (isOverdue ? 'task-due overdue' : 'task-due');
+    const dueDisplay = isOverdue ? `${dueText}（期限超過）` : dueText;
+
     return `
-      <div class="task-card" data-id="${t.id}">
-        <div class="status-dot ${statusClass}"></div>
+      <div class="task-card ${statusClass}" data-id="${t.id}">
         <div class="task-info">
           <div class="task-title">${escapeHtml(t.title || '無題')}</div>
           <div class="task-meta">
@@ -111,7 +122,8 @@ function renderTaskList(tasks) {
             <span>📁 ${escapeHtml(t.project || 'なし')}</span>
           </div>
         </div>
-        <div class="${dueClass}">📅 ${dueText}</div>
+        <span class="status-badge ${badgeClass}">${statusLabel}</span>
+        <div class="${dueClass}">📅 ${dueDisplay}</div>
       </div>
     `;
   }).join('');
@@ -124,19 +136,17 @@ function renderTaskList(tasks) {
   });
 }
 
-// ========== 排序（新增） ==========
+// ========== 排序：已完成沉底，未完成按截止时间升序 ==========
 function sortTasks(tasks) {
   return tasks.sort((a, b) => {
-    // 已完成的任务排到最后
     if (a.status === 'completed' && b.status !== 'completed') return 1;
     if (a.status !== 'completed' && b.status === 'completed') return -1;
 
-    // 同为未完成，按截止时间升序，最近的在前面
     const aDue = a.dueDate ? (a.dueDate.toDate ? a.dueDate.toDate() : new Date(a.dueDate)) : null;
     const bDue = b.dueDate ? (b.dueDate.toDate ? b.dueDate.toDate() : new Date(b.dueDate)) : null;
     if (aDue && bDue) return aDue - bDue;
-    if (aDue) return -1;   // a有日期b无，a在前
-    if (bDue) return 1;    // b有日期a无，b在前
+    if (aDue) return -1;
+    if (bDue) return 1;
     return 0;
   });
 }
@@ -164,7 +174,6 @@ function applyFilters() {
     filtered = filtered.filter(t => t.assignee === assigneeFilter);
   }
 
-  // 应用排序
   sortTasks(filtered);
   renderTaskList(filtered);
 }
@@ -180,33 +189,28 @@ function openDetailModal(task) {
   document.getElementById('viewDesc').textContent = task.desc || '説明なし';
   document.getElementById('detailTitle').textContent = task.title || '無題';
 
-  // 填充编辑表单
   document.getElementById('editTitle').value = task.title || '';
   document.getElementById('editDesc').value = task.desc || '';
   document.getElementById('editDue').value = dueDate ? dueDate.toISOString().slice(0, 10) : '';
   document.getElementById('editStatus').value = task.status || 'open';
 
-  // 填充项目下拉
   const editProjectSelect = document.getElementById('editProject');
   editProjectSelect.innerHTML = '<option value="">なし</option>';
   allProjects.forEach(p => {
     editProjectSelect.innerHTML += `<option value="${p.name}" ${task.project === p.name ? 'selected' : ''}>${p.name}</option>`;
   });
 
-  // 填充负责人下拉（可编辑）
   const editAssigneeSelect = document.getElementById('editAssignee');
   editAssigneeSelect.innerHTML = '';
   allMembers.forEach(m => {
     editAssigneeSelect.innerHTML += `<option value="${m.name}" ${task.assignee === m.name ? 'selected' : ''}>${m.name}</option>`;
   });
 
-  // 视图切换
   document.getElementById('viewMode').style.display = 'block';
   document.getElementById('editMode').style.display = 'none';
   document.getElementById('editToggleBtn').style.display = 'inline-block';
   document.getElementById('saveEditBtn').style.display = 'none';
 
-  // 权限控制
   document.getElementById('adminActions').style.display = hasAdminPermission() ? 'block' : 'none';
 
   detailModal.show();
@@ -261,14 +265,12 @@ function attachEvents() {
     const due = document.getElementById('editDue').value;
     const status = document.getElementById('editStatus').value;
 
-    // 更新 Firestore
     await updateDoc(doc(db, 'tasks', currentTask.id), {
       title, assignee, project, desc,
       dueDate: due || null,
       status
     });
 
-    // 更新本地数据
     currentTask.title = title;
     currentTask.assignee = assignee;
     currentTask.project = project;
@@ -276,7 +278,6 @@ function attachEvents() {
     currentTask.dueDate = due || null;
     currentTask.status = status;
 
-    // 刷新视图并应用排序
     openDetailModal(currentTask);
     applyFilters();
   });
