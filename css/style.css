@@ -490,3 +490,36 @@ body {
 .status-progress { background: #FEF3C7; color: #92400E; }
 .status-completed { background: #D1FAE5; color: #065F46; }
 .status-overdue { background: #FEE2E2; color: #991B1B; }
+
+/* ===== Task 状态边框 ===== */
+.task-card {
+  border-left: 4px solid #CBD5E1;
+}
+.task-card.status-open {
+  border-left-color: var(--sums-blue);
+}
+.task-card.status-in-progress {
+  border-left-color: #F59E0B;
+}
+.task-card.status-completed {
+  border-left-color: #10B981;
+}
+
+/* 状态标签徽章 */
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge-open { background: #DBEAFE; color: #1E40AF; }
+.badge-progress { background: #FEF3C7; color: #92400E; }
+.badge-completed { background: #D1FAE5; color: #065F46; }
+
+/* 超期样式增强 */
+.task-due.overdue {
+  color: #EF4444;
+  font-weight: 600;
+}
